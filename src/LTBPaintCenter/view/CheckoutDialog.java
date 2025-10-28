@@ -82,14 +82,16 @@ public class CheckoutDialog extends JDialog {
     }
 
     private void updateTotals() {
-        double vatable = subtotal; // For now, all items are vatable
+        double vatRate = 0.12;
+        double vatable = subtotal / (1 + vatRate);
+        double vat = subtotal - vatable;
         double nonVat = 0.0;
-        double vat = vatable * vatRate;
-        double total = vatable + nonVat + vat;
+        double total = subtotal;
+
         lblRef.setText(referenceNo);
         lblVatable.setText(String.format("₱%.2f", vatable));
         lblNonVat.setText(String.format("₱%.2f", nonVat));
-        lblSubtotal.setText(String.format("₱%.2f", vatable + nonVat));
+        lblSubtotal.setText(String.format("₱%.2f", subtotal));
         lblVAT.setText(String.format("₱%.2f", vat));
         lblTotal.setText(String.format("₱%.2f", total));
     }
@@ -127,14 +129,17 @@ public class CheckoutDialog extends JDialog {
         }
 
         sb.append("--------------------------------------\n");
-        double vatable = subtotal; // assume all VATable for now
+
+        double vatRate = 0.12;
+        double subtotalWithVat = subtotal;
+        double vatable = subtotalWithVat / (1 + vatRate);
+        double vat = subtotalWithVat - vatable;
         double nonVat = 0.0;
-        double vat = vatable * vatRate;
-        double sub = vatable + nonVat;
-        double total = sub + vat;
+        double total = subtotalWithVat;
+
         sb.append(String.format("VATable: %26.2f\n", vatable));
         sb.append(String.format("VAT-Exempt: %23.2f\n", nonVat));
-        sb.append(String.format("Subtotal: %26.2f\n", sub));
+        sb.append(String.format("Subtotal: %26.2f\n", subtotalWithVat));
         sb.append(String.format("VAT (12%%): %25.2f\n", vat));
         sb.append(String.format("TOTAL: %28.2f\n", total));
         sb.append("--------------------------------------\n");

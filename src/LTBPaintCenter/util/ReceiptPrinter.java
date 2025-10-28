@@ -54,17 +54,19 @@ public class ReceiptPrinter {
      */
     public static String generateReceiptText(List<SaleItem> items, String referenceNo) {
         StringBuilder sb = new StringBuilder();
-        double vatable = items.stream().mapToDouble(SaleItem::getSubtotal).sum();
-        double nonVat = 0.0; // Placeholder until items carry VAT-exempt flag
-        double subtotal = vatable + nonVat;
-        double vat = vatable * VAT_RATE;
-        double total = subtotal + vat;
+
+        double subtotal = items.stream().mapToDouble(SaleItem::getSubtotal).sum();
+        double vatable = subtotal / (1 + VAT_RATE);
+        double vat = subtotal - vatable;
+        double nonVat = 0.0;
+        double total = subtotal;
 
         sb.append("        LTB Paint Center\n");
         sb.append("      Official Sales Receipt\n");
         sb.append("--------------------------------------\n");
         sb.append("Date: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
-        if (referenceNo != null && !referenceNo.isBlank()) sb.append("Ref No.: ").append(referenceNo).append("\n");
+        if (referenceNo != null && !referenceNo.isBlank())
+            sb.append("Ref No.: ").append(referenceNo).append("\n");
         sb.append("--------------------------------------\n");
         sb.append(String.format("%-20s %5s %10s\n", "Item", "Qty", "Subtotal"));
         sb.append("--------------------------------------\n");
@@ -85,6 +87,7 @@ public class ReceiptPrinter {
         sb.append("--------------------------------------\n");
         sb.append("Thank you for shopping with us!\n");
         sb.append("       - LTB Paint Center -\n");
+
         return sb.toString();
     }
 
@@ -144,8 +147,10 @@ public class ReceiptPrinter {
             PdfWriter.getInstance(doc, new FileOutputStream(filePath));
             doc.open();
 
-            com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.COURIER, 12, com.itextpdf.text.Font.BOLD);
-            com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.COURIER, 10, com.itextpdf.text.Font.NORMAL);
+            com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(
+                    com.itextpdf.text.Font.FontFamily.COURIER, 12, com.itextpdf.text.Font.BOLD);
+            com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(
+                    com.itextpdf.text.Font.FontFamily.COURIER, 10, com.itextpdf.text.Font.NORMAL);
 
             Paragraph header = new Paragraph("LTB Paint Center\nOfficial Sales Receipt\n\n", headerFont);
             header.setAlignment(Element.ALIGN_CENTER);
@@ -163,23 +168,28 @@ public class ReceiptPrinter {
             table.addCell("Qty");
             table.addCell("Subtotal");
 
-            double vatable = 0;
+            double subtotalWithVat = 0;
             for (SaleItem item : items) {
                 table.addCell(new Phrase(item.getName(), normalFont));
                 table.addCell(new Phrase(String.valueOf(item.getQty()), normalFont));
                 table.addCell(new Phrase(String.format("%.2f", item.getSubtotal()), normalFont));
-                vatable += item.getSubtotal();
+                subtotalWithVat += item.getSubtotal();
             }
 
             doc.add(table);
             doc.add(new Paragraph("--------------------------------------\n", normalFont));
 
-            double nonVat = 0.0; // placeholder
-            double subtotal = vatable + nonVat;
-            double vat = vatable * VAT_RATE;
-            double total = subtotal + vat;
-            doc.add(new Paragraph(String.format("VATable: %.2f\nVAT-Exempt: %.2f\nSubtotal: %.2f\nVAT (12%%): %.2f\nTOTAL: %.2f\n",
-                    vatable, nonVat, subtotal, vat, total), normalFont));
+            double VAT_RATE = 0.12;
+            double nonVat = 0.0; // placeholder for non-VAT items
+
+            // ✅ VAT-INCLUSIVE FIX
+            double vatable = subtotalWithVat / (1 + VAT_RATE);
+            double vat = subtotalWithVat - vatable;
+            double total = subtotalWithVat;
+
+            doc.add(new Paragraph(String.format(
+                    "VATable: %.2f\nVAT-Exempt: %.2f\nSubtotal: %.2f\nVAT (12%%): %.2f\nTOTAL: %.2f\n",
+                    vatable, nonVat, subtotalWithVat, vat, total), normalFont));
 
             doc.add(new Paragraph("--------------------------------------\nThank you for shopping with us!\n- LTB Paint Center -", normalFont));
             doc.close();

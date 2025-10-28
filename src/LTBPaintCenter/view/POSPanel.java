@@ -466,14 +466,17 @@ public class POSPanel extends JPanel {
         // Ensure UI updates happen on the EDT for consistent repaint behavior
         Runnable r = () -> {
             // Use BigDecimal for accurate currency math and rounding
-            java.math.BigDecimal vatable = cart.values().stream()
+            java.math.BigDecimal subtotal = cart.values().stream()
                     .map(it -> java.math.BigDecimal.valueOf(it.getSubtotal()))
                     .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-            java.math.BigDecimal nonVat = java.math.BigDecimal.ZERO; // all items VATable by default in current business rules
-            java.math.BigDecimal subtotal = vatable.add(nonVat);
-            java.math.BigDecimal vat = vatable.multiply(java.math.BigDecimal.valueOf(0.12))
-                    .setScale(2, java.math.RoundingMode.HALF_UP);
-            java.math.BigDecimal total = subtotal.add(vat).setScale(2, java.math.RoundingMode.HALF_UP);
+
+            java.math.BigDecimal vatable = subtotal.divide(java.math.BigDecimal.valueOf(1.12), 2, java.math.RoundingMode.HALF_UP);
+
+            java.math.BigDecimal vat = subtotal.subtract(vatable).setScale(2, java.math.RoundingMode.HALF_UP);
+
+            java.math.BigDecimal nonVat = java.math.BigDecimal.ZERO;
+
+            java.math.BigDecimal total = subtotal.setScale(2, java.math.RoundingMode.HALF_UP);
 
             // Update labels
             lblSubtotalLabel.setText(String.format("Subtotal: ₱%.2f", subtotal.doubleValue()));
