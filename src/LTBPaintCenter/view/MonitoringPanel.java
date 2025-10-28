@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Monitoring panel for viewing sales records, applying filters,
  * and visualizing revenue breakdown by brand or type.
- * Now also includes stock and expiration alerts.
+ * Also includes stock and expiration alerts.
  */
 public class MonitoringPanel extends JPanel {
     // Existing components
@@ -63,7 +63,6 @@ public class MonitoringPanel extends JPanel {
     }
     private final java.util.List<RowRef> currentRows = new java.util.ArrayList<>();
 
-    // 🟢 NEW: Alerts Panel
     private final JTextArea taAlerts = new JTextArea();
 
     public MonitoringPanel() {
@@ -74,10 +73,10 @@ public class MonitoringPanel extends JPanel {
         initTopFilters();
         initTable();
         initSummaryBar();
-        initAlertsPanel(); // 🆕 Add alerts section
+        initAlertsPanel(); // Add alerts section
     }
 
-    // FILTER BAR (unchanged)
+    // FILTER BAR
     private void initTopFilters() {
         JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
         filterPanel.setBackground(Color.WHITE);
@@ -100,7 +99,7 @@ public class MonitoringPanel extends JPanel {
         filterPanel.add(btnApplyFilter);
         filterPanel.add(btnClearFilter);
         filterPanel.add(Box.createHorizontalStrut(12));
-        filterPanel.add(btnResetTransactions);
+        //filterPanel.add(btnResetTransactions);
         add(filterPanel, BorderLayout.NORTH);
     }
 
@@ -133,7 +132,7 @@ public class MonitoringPanel extends JPanel {
         cbYear.setSelectedItem(String.valueOf(currentYear));
     }
 
-    // SALES TABLE (unchanged except showSaleDetailsDialog)
+    // SALES TABLE
     private void initTable() {
         table.setRowHeight(26);
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
@@ -153,7 +152,6 @@ public class MonitoringPanel extends JPanel {
             }
         });
 
-        // Column sizing and renderers
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.setFillsViewportHeight(true);
         javax.swing.table.DefaultTableCellRenderer centerRenderer = new javax.swing.table.DefaultTableCellRenderer();
@@ -164,7 +162,6 @@ public class MonitoringPanel extends JPanel {
             table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
 
-        // Preferred widths
         table.getColumnModel().getColumn(0).setPreferredWidth(110); // Reference No
         table.getColumnModel().getColumn(1).setPreferredWidth(140); // Date
         table.getColumnModel().getColumn(2).setPreferredWidth(240); // Item
@@ -188,7 +185,7 @@ public class MonitoringPanel extends JPanel {
         });
     }
 
-    // SUMMARY SECTION (mostly unchanged)
+    // SUMMARY SECTION
     private void initSummaryBar() {
         JPanel summaryContainer = new JPanel();
         summaryContainer.setLayout(new BoxLayout(summaryContainer, BoxLayout.Y_AXIS));
@@ -233,7 +230,7 @@ public class MonitoringPanel extends JPanel {
         parent.add(area);
     }
 
-    // 🆕 ALERTS SECTION (reworked to JList with color coding and selection highlight)
+    // ALERTS SECTION
     private java.util.function.IntConsumer onAlertClick;
 
     private static class AlertItem {
@@ -307,12 +304,9 @@ public class MonitoringPanel extends JPanel {
 
         JScrollPane scroll = new JScrollPane(lstAlerts);
         alertsContainer.add(scroll, BorderLayout.CENTER);
-
-        // Place alerts at EAST so it doesn't replace the SOUTH summary (which contains the bar chart)
         add(alertsContainer, BorderLayout.EAST);
     }
 
-    // 🟢 NEW: Update alerts with inventory data (no emojis, color-coded by renderer)
     public void updateAlerts(List<InventoryBatch> batches) {
         alertModel.clear();
         LocalDate today = LocalDate.now();
@@ -341,7 +335,7 @@ public class MonitoringPanel extends JPanel {
             }
         }
 
-        // Only show the healthy message when there are products and none triggered alerts
+        // Only shows the healthy message when there are products and none triggered alerts
         if (alertModel.isEmpty() && batches != null && !batches.isEmpty()) {
             alertModel.addElement(new AlertItem(0, "All products are healthy and in stock.", AlertItem.Type.HEALTHY));
         }
@@ -351,7 +345,7 @@ public class MonitoringPanel extends JPanel {
         return (s == null || s.isBlank()) ? "Unknown" : s;
     }
 
-    // SALES SUMMARY METHODS (unchanged)
+    // SALES SUMMARY METHODS
     public void refreshSales(Collection<Sale> sales) {
         tableModel.setRowCount(0);
         currentRows.clear();
@@ -505,7 +499,8 @@ public class MonitoringPanel extends JPanel {
         dlg.setLocationRelativeTo(owner);
         dlg.setVisible(true);
     }
-    // 🆕 For updating alerts externally
+
+    // For updating alerts externally
     public JButton getBtnResetTransactions() { return btnResetTransactions; }
     public JTextArea getTaAlerts() { return taAlerts; }
 }

@@ -101,7 +101,7 @@ public class CheckoutDialog extends JDialog {
     }
 
     private void showReceipt() {
-        // Simulate printed receipt in a pop-up window
+        // Show printed receipt in a pop-up window
         JDialog receipt = new JDialog(this, "Receipt", true);
         receipt.setSize(420, 520);
         receipt.setLocationRelativeTo(this);

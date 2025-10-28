@@ -24,10 +24,6 @@ public class SaleItem {
 
     public int getProductId() { return productId; }
 
-    public String getDisplayId() {
-        return String.format("P%03d", productId);
-    }
-
     public String getName() { return name; }
 
     public int getQty() { return qty; }

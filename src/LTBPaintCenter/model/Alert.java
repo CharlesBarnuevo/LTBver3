@@ -60,7 +60,7 @@ public class Alert {
         return null;
     }
 
-    // --- Getters ---
+    // Getters
     public int getBatchId() { return batchId; }
     public String getProductName() { return productName; }
     public String getBrand() { return brand; }

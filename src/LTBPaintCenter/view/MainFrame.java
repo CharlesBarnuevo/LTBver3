@@ -1,7 +1,7 @@
 package LTBPaintCenter.view;
 
 import LTBPaintCenter.controller.*;
-import LTBPaintCenter.model.AdminDAO;
+import LTBPaintCenter.dao.AdminDAO;
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
@@ -26,7 +26,7 @@ public class MainFrame extends JFrame {
     private final JButton btnMonitoring = new JButton("Monitoring");
 
     private final JLabel lblProfile = new JLabel("👤", SwingConstants.CENTER);
-    private final JLabel lblRole = new JLabel("Cashier Mode", SwingConstants.CENTER);
+    private final JLabel lblRole = new JLabel("Cashier", SwingConstants.CENTER);
 
     private boolean isAdmin = false;
     private final Map<String, JPanel> panelMap = new HashMap<>();

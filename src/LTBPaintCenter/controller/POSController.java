@@ -1,5 +1,6 @@
 package LTBPaintCenter.controller;
 
+import LTBPaintCenter.dao.ProductDAO;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.POSPanel;
 
@@ -56,7 +57,6 @@ public class POSController {
             }
 
             report.recordSale(sale);
-            // No need to show another dialog; receipt shown in CheckoutDialog
             refreshPOS();
             return true;
 
@@ -68,7 +68,7 @@ public class POSController {
 
     public void refreshPOS() {
         // Refresh products directly from DB to reflect latest Inventory changes
-        java.util.List<LTBPaintCenter.model.Product> products = LTBPaintCenter.model.ProductDAO.getAvailableForPOS();
+        java.util.List<LTBPaintCenter.model.Product> products = ProductDAO.getAvailableForPOS();
         java.util.List<LTBPaintCenter.model.ProductBatch> batches = new java.util.ArrayList<>();
         java.time.LocalDate today = java.time.LocalDate.now();
         for (LTBPaintCenter.model.Product p : products) {

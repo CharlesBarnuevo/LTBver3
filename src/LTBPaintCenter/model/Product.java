@@ -51,15 +51,6 @@ public class Product {
     public void setType(String type) { this.type = type; }
 
     public LocalDate getDateImported() { return dateImported; }
-    public void setDateImported(LocalDate dateImported) { this.dateImported = dateImported; }
     public LocalDate getExpirationDate() { return expirationDate; }
-    public void setExpirationDate(LocalDate expirationDate) { this.expirationDate = expirationDate; }
     public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-
-    // helper to get formatted display id like "P001"
-    public String getDisplayId() {
-        return String.format("P%03d", id);
-    }
 }

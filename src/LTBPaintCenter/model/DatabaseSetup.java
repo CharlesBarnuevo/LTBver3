@@ -1,5 +1,7 @@
 package LTBPaintCenter.model;
 
+import LTBPaintCenter.dao.AdminDAO;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -14,7 +16,7 @@ public class DatabaseSetup {
         try (Connection conn = Database.getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // === PRODUCTS / INVENTORY TABLE ===
+            // PRODUCTS/INVENTORY TABLE
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS inventory (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,7 +40,7 @@ public class DatabaseSetup {
                 // Column may already exist; ignore errors
             }
 
-            // === SALES TABLE (for POS transactions) ===
+            // SALES TABLE (for POS transactions)
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS sales (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +62,7 @@ public class DatabaseSetup {
                 // Column may already exist; ignore errors
             }
 
-            // === OPTIONAL: LOGS TABLE (for monitoring events) ===
+            // LOGS TABLE (for monitoring events) ===
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS logs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,7 +72,7 @@ public class DatabaseSetup {
                 );
             """);
 
-            // === ADMIN SETTINGS TABLE (persistent admin password) ===
+            // ADMIN SETTINGS TABLE (persistent admin password)
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS admin_settings (
                     id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -85,8 +87,8 @@ public class DatabaseSetup {
                 int count = rs.next() ? rs.getInt(1) : 0;
                 if (count == 0) {
                     String defaultPass = "admin123";
-                    String salt = LTBPaintCenter.model.AdminDAO.generateSalt();
-                    String hash = LTBPaintCenter.model.AdminDAO.hashPassword(defaultPass, salt);
+                    String salt = AdminDAO.generateSalt();
+                    String hash = AdminDAO.hashPassword(defaultPass, salt);
                     try (java.sql.PreparedStatement ins = conn.prepareStatement("INSERT INTO admin_settings (id, password_hash, salt) VALUES (1, ?, ?)")) {
                         ins.setString(1, hash);
                         ins.setString(2, salt);

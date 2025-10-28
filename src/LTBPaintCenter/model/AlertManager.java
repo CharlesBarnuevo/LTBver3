@@ -13,7 +13,7 @@ public class AlertManager {
 
     /**
      * Scans all product batches and generates alerts if needed.
-     * @param batches list of all product batches in inventory
+     * list of all product batches in inventory
      */
     public void scanInventory(List<ProductBatch> batches) {
         activeAlerts.clear();
@@ -43,9 +43,6 @@ public class AlertManager {
         return filtered;
     }
 
-    /**
-     * Optional: remove expired or resolved alerts.
-     */
     public void clearResolved(List<ProductBatch> batches) {
         activeAlerts.removeIf(alert -> {
             for (ProductBatch batch : batches) {

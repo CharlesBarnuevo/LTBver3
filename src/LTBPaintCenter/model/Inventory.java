@@ -21,11 +21,6 @@ public class Inventory {
         return map.values();
     }
 
-    /**
-     * Adapter: returns current inventory as ProductBatch objects for views that operate on batches.
-     * Note: since legacy inventory stores aggregated Product without explicit status, status is
-     * computed by ProductBatch based on expirationDate.
-     */
     public Collection<ProductBatch> getAllBatches() {
         List<ProductBatch> list = new ArrayList<>();
         for (Product p : map.values()) {

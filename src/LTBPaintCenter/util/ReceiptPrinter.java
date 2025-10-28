@@ -1,64 +1,27 @@
 package LTBPaintCenter.util;
 
 import LTBPaintCenter.model.SaleItem;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 
-import javax.print.*;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
-import java.awt.print.*;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-// AWT fonts (for printing)
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
-import java.awt.Font;
 
-// iText fonts (for PDF)
-import com.itextpdf.text.Document;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.Element;
-import com.itextpdf.text.Phrase;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
-
-
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.*;
-
-/**
- * Utility class for generating and printing receipts.
- */
 public class ReceiptPrinter {
 
     private static final float VAT_RATE = 0.12f;
 
-    /**
-     * Generate a formatted receipt text (same layout as the dialog).
-     */
     public static String generateReceiptText(List<SaleItem> items) {
         return generateReceiptText(items, null);
     }
 
-    /**
-     * Generate a formatted receipt text with optional reference number and VAT breakdown.
-     */
     public static String generateReceiptText(List<SaleItem> items, String referenceNo) {
         StringBuilder sb = new StringBuilder();
-
         double subtotal = items.stream().mapToDouble(SaleItem::getSubtotal).sum();
         double vatable = subtotal / (1 + VAT_RATE);
         double vat = subtotal - vatable;
-        double nonVat = 0.0;
         double total = subtotal;
 
         sb.append("        LTB Paint Center\n");
@@ -80,120 +43,102 @@ public class ReceiptPrinter {
 
         sb.append("--------------------------------------\n");
         sb.append(String.format("VATable: %26.2f\n", vatable));
-        sb.append(String.format("VAT-Exempt: %23.2f\n", nonVat));
-        sb.append(String.format("Subtotal: %26.2f\n", subtotal));
         sb.append(String.format("VAT (12%%): %25.2f\n", vat));
         sb.append(String.format("TOTAL: %28.2f\n", total));
         sb.append("--------------------------------------\n");
         sb.append("Thank you for shopping with us!\n");
         sb.append("       - LTB Paint Center -\n");
-
         return sb.toString();
     }
 
-    /**
-     * Print the receipt using the default printer.
-     */
-    public static void printReceipt(List<SaleItem> items) {
-        printReceipt(items, null);
-    }
-
-    /**
-     * Print the receipt with an optional reference number.
-     */
-    public static void printReceipt(List<SaleItem> items, String referenceNo) {
-        String receiptText = generateReceiptText(items, referenceNo);
-
-        PrinterJob job = PrinterJob.getPrinterJob();
-        job.setPrintable(new Printable() {
-            public int print(Graphics g, PageFormat pf, int pageIndex) throws PrinterException {
-                if (pageIndex > 0) return NO_SUCH_PAGE;
-                Graphics2D g2 = (Graphics2D) g;
-                g2.translate(pf.getImageableX(), pf.getImageableY());
-                g2.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 10));
-
-                int y = 20;
-                for (String line : receiptText.split("\n")) {
-                    g2.drawString(line, 20, y);
-                    y += 12;
-                }
-                return PAGE_EXISTS;
-            }
-        });
-
-        boolean doPrint = job.printDialog();
-        if (doPrint) {
-            try {
-                job.print();
-            } catch (PrinterException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Export the receipt as a PDF using iText.
-     */
-    public static void saveAsPDF(List<SaleItem> items, String filePath) {
-        saveAsPDF(items, filePath, null);
-    }
-
-    /**
-     * Export the receipt as a PDF using iText with optional reference number and VAT breakdown.
-     */
     public static void saveAsPDF(List<SaleItem> items, String filePath, String referenceNo) {
         try {
-            Document doc = new Document();
+            Document doc = new Document(PageSize.A5, 36, 36, 36, 36);
             PdfWriter.getInstance(doc, new FileOutputStream(filePath));
             doc.open();
 
-            com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(
-                    com.itextpdf.text.Font.FontFamily.COURIER, 12, com.itextpdf.text.Font.BOLD);
-            com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(
-                    com.itextpdf.text.Font.FontFamily.COURIER, 10, com.itextpdf.text.Font.NORMAL);
+            Font headerFont = new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD);
+            Font normalFont = new Font(Font.FontFamily.COURIER, 10, Font.NORMAL);
+            Font boldFont = new Font(Font.FontFamily.COURIER, 10, Font.BOLD);
 
-            Paragraph header = new Paragraph("LTB Paint Center\nOfficial Sales Receipt\n\n", headerFont);
-            header.setAlignment(Element.ALIGN_CENTER);
-            doc.add(header);
+            Paragraph storeHeader = new Paragraph("LTB Paint Center", headerFont);
+            storeHeader.setAlignment(Element.ALIGN_CENTER);
+            doc.add(storeHeader);
 
-            doc.add(new Paragraph("Date: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()), normalFont));
+            Paragraph subHeader = new Paragraph("Official Sales Receipt\n\n", normalFont);
+            subHeader.setAlignment(Element.ALIGN_CENTER);
+            doc.add(subHeader);
+
+            Paragraph dateInfo = new Paragraph("Date: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()), normalFont);
             if (referenceNo != null && !referenceNo.isBlank()) {
-                doc.add(new Paragraph("Ref No.: " + referenceNo, normalFont));
+                dateInfo.add(new Phrase("\nRef No.: " + referenceNo, normalFont));
             }
-            doc.add(new Paragraph("--------------------------------------\n", normalFont));
+            doc.add(dateInfo);
 
-            PdfPTable table = new PdfPTable(new float[]{3, 1, 2});
+            doc.add(new Paragraph("--------------------------------------------------", normalFont));
+
+            PdfPTable table = new PdfPTable(new float[]{4, 1, 2});
             table.setWidthPercentage(100);
-            table.addCell("Item");
-            table.addCell("Qty");
-            table.addCell("Subtotal");
+            table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_LEFT);
+            table.getDefaultCell().setBorder(Rectangle.NO_BORDER);
 
-            double subtotalWithVat = 0;
+            PdfPCell h1 = new PdfPCell(new Phrase("Item", boldFont));
+            PdfPCell h2 = new PdfPCell(new Phrase("Qty", boldFont));
+            PdfPCell h3 = new PdfPCell(new Phrase("Subtotal", boldFont));
+            h1.setBorder(Rectangle.BOTTOM);
+            h2.setBorder(Rectangle.BOTTOM);
+            h3.setBorder(Rectangle.BOTTOM);
+            h1.setHorizontalAlignment(Element.ALIGN_LEFT);
+            h2.setHorizontalAlignment(Element.ALIGN_CENTER);
+            h3.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            table.addCell(h1);
+            table.addCell(h2);
+            table.addCell(h3);
+
+            double subtotal = 0;
             for (SaleItem item : items) {
-                table.addCell(new Phrase(item.getName(), normalFont));
-                table.addCell(new Phrase(String.valueOf(item.getQty()), normalFont));
-                table.addCell(new Phrase(String.format("%.2f", item.getSubtotal()), normalFont));
-                subtotalWithVat += item.getSubtotal();
+                PdfPCell c1 = new PdfPCell(new Phrase(item.getName(), normalFont));
+                PdfPCell c2 = new PdfPCell(new Phrase(String.valueOf(item.getQty()), normalFont));
+                PdfPCell c3 = new PdfPCell(new Phrase(String.format("%.2f", item.getSubtotal()), normalFont));
+                c1.setBorder(Rectangle.NO_BORDER);
+                c2.setBorder(Rectangle.NO_BORDER);
+                c3.setBorder(Rectangle.NO_BORDER);
+                c1.setHorizontalAlignment(Element.ALIGN_LEFT);
+                c2.setHorizontalAlignment(Element.ALIGN_CENTER);
+                c3.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                table.addCell(c1);
+                table.addCell(c2);
+                table.addCell(c3);
+                subtotal += item.getSubtotal();
             }
 
             doc.add(table);
-            doc.add(new Paragraph("--------------------------------------\n", normalFont));
+            doc.add(new Paragraph("--------------------------------------------------", normalFont));
 
-            double VAT_RATE = 0.12;
-            double nonVat = 0.0; // placeholder for non-VAT items
+            double vatable = subtotal / (1 + VAT_RATE);
+            double vat = subtotal - vatable;
+            double total = subtotal;
 
-            // ✅ VAT-INCLUSIVE FIX
-            double vatable = subtotalWithVat / (1 + VAT_RATE);
-            double vat = subtotalWithVat - vatable;
-            double total = subtotalWithVat;
+            PdfPTable summary = new PdfPTable(2);
+            summary.setWidthPercentage(100);
+            summary.getDefaultCell().setBorder(Rectangle.NO_BORDER);
+            summary.addCell(new Phrase("VATable Sales:", normalFont));
+            summary.addCell(new Phrase(String.format("%.2f", vatable), normalFont));
+            summary.addCell(new Phrase("VAT (12%):", normalFont));
+            summary.addCell(new Phrase(String.format("%.2f", vat), normalFont));
+            summary.addCell(new Phrase("Total Amount:", boldFont));
+            PdfPCell totalCell = new PdfPCell(new Phrase(String.format("%.2f", total), boldFont));
+            totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            totalCell.setBorder(Rectangle.NO_BORDER);
+            summary.addCell(totalCell);
 
-            doc.add(new Paragraph(String.format(
-                    "VATable: %.2f\nVAT-Exempt: %.2f\nSubtotal: %.2f\nVAT (12%%): %.2f\nTOTAL: %.2f\n",
-                    vatable, nonVat, subtotalWithVat, vat, total), normalFont));
+            doc.add(summary);
+            doc.add(new Paragraph("--------------------------------------------------", normalFont));
+            Paragraph footer = new Paragraph("Thank you for shopping with us!\n- LTB Paint Center -", normalFont);
+            footer.setAlignment(Element.ALIGN_CENTER);
+            doc.add(footer);
 
-            doc.add(new Paragraph("--------------------------------------\nThank you for shopping with us!\n- LTB Paint Center -", normalFont));
             doc.close();
-
             System.out.println("Receipt saved as: " + filePath);
 
         } catch (Exception e) {

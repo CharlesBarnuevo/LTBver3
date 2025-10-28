@@ -7,9 +7,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Handles database operations for InventoryBatch records.
- */
+//Handles database operations for InventoryBatch records.
 public class InventoryDAO {
 
     private final Connection conn;
@@ -17,10 +15,7 @@ public class InventoryDAO {
     public InventoryDAO(Connection conn) {
         this.conn = conn;
     }
-
-    // ───────────────────────────────
-    // Create
-    // ───────────────────────────────
+    // Create new batch
     public boolean addBatch(InventoryBatch batch) {
         String sql = "INSERT INTO inventory (product_code, name, brand, color, type, price, qty, date_imported, expiration_date, status) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -42,9 +37,7 @@ public class InventoryDAO {
         }
     }
 
-    // ───────────────────────────────
-    // Read all
-    // ───────────────────────────────
+    // Reader
     public List<InventoryBatch> getAllBatches() {
         List<InventoryBatch> list = new ArrayList<>();
         String sql = "SELECT * FROM inventory ORDER BY id ASC";
@@ -59,9 +52,7 @@ public class InventoryDAO {
         return list;
     }
 
-    // ───────────────────────────────
     // Update
-    // ───────────────────────────────
     public boolean updateBatch(InventoryBatch batch) {
         String sql = "UPDATE inventory SET product_code=?, name=?, brand=?, color=?, type=?, price=?, qty=?, " +
                 "date_imported=?, expiration_date=?, status=? WHERE id=?";
@@ -84,9 +75,7 @@ public class InventoryDAO {
         }
     }
 
-    // ───────────────────────────────
     // Delete
-    // ───────────────────────────────
     public boolean deleteBatch(int id) {
         String sql = "DELETE FROM inventory WHERE id=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -98,9 +87,7 @@ public class InventoryDAO {
         }
     }
 
-    // ───────────────────────────────
     // Helper: Extract from ResultSet
-    // ───────────────────────────────
     private InventoryBatch extractBatch(ResultSet rs) throws SQLException {
         InventoryBatch b = new InventoryBatch();
         b.setId(rs.getInt("id"));
@@ -131,7 +118,7 @@ public class InventoryDAO {
         }
         String s = val.toString().trim();
         if (s.isEmpty()) return null;
-        // Numeric string (epoch millis)
+
         if (s.matches("\\d+")) {
             try {
                 long epochMillis = Long.parseLong(s);
@@ -159,9 +146,7 @@ public class InventoryDAO {
         }
     }
 
-    // ───────────────────────────────
     // Maintenance: auto-update statuses
-    // ───────────────────────────────
     public void refreshStatuses() {
         String sql = "SELECT * FROM inventory";
         try (Statement st = conn.createStatement();

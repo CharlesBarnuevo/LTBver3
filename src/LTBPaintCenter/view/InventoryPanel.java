@@ -45,9 +45,7 @@ public class InventoryPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
 
-        // ─────────────────────────────
         // Table setup
-        // ─────────────────────────────
         String[] columns = {
                 "ID", "Product ID", "Name", "Brand", "Color", "Type", "Price", "Qty",
                 "Date Imported", "Expiration Date", "Status"
@@ -108,9 +106,7 @@ public class InventoryPanel extends JPanel {
             } catch (Exception ignored) {}
         });
 
-        // ─────────────────────────────
         // Form panel
-        // ─────────────────────────────
         JPanel formPanel = new JPanel(new GridLayout(3, 6, 8, 8));
         formPanel.setBorder(BorderFactory.createTitledBorder("Product Batch Details"));
         formPanel.setBackground(Color.WHITE);
@@ -179,9 +175,7 @@ public class InventoryPanel extends JPanel {
         northContainer.add(filterBar, BorderLayout.SOUTH);
         add(northContainer, BorderLayout.NORTH);
 
-        // ─────────────────────────────
         // Buttons
-        // ─────────────────────────────
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnUpdate);
@@ -189,9 +183,7 @@ public class InventoryPanel extends JPanel {
         buttonPanel.add(btnRefresh);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // ─────────────────────────────
         // Button actions
-        // ─────────────────────────────
         btnAdd.addActionListener(e -> handleAdd());
         btnUpdate.addActionListener(e -> handleUpdate());
         btnDelete.addActionListener(e -> handleDelete());
@@ -202,9 +194,7 @@ public class InventoryPanel extends JPanel {
         refreshTable();
     }
 
-    // ─────────────────────────────
     // Event handlers
-    // ─────────────────────────────
     private void handleAdd() {
         try {
             String name = txtName.getText().trim();
@@ -308,9 +298,7 @@ public class InventoryPanel extends JPanel {
         }
     }
 
-    // ─────────────────────────────
     // Refresh table
-    // ─────────────────────────────
     public void refreshTable() {
         tableModel.setRowCount(0);
         List<InventoryBatch> batches = controller.getAllBatches();

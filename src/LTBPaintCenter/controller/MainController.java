@@ -1,11 +1,11 @@
 package LTBPaintCenter.controller;
 
+import LTBPaintCenter.dao.ProductDAO;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.MainFrame;
 import LTBPaintCenter.util.ReceiptPrinter;
 
 import javax.swing.*;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -137,37 +137,6 @@ public class MainController {
             JOptionPane.showMessageDialog(frame, "Checkout failed: " + e.getMessage());
             e.printStackTrace();
             return false;
-        }
-    }
-
-    public static void seedData() {
-        DatabaseSetup.initializeDatabase();
-
-        List<Product> existing = ProductDAO.getAll();
-        if (!existing.isEmpty()) {
-            System.out.println("Products already exist — skipping seed.");
-            return;
-        }
-
-        System.out.println("Seeding default products into database...");
-
-        try {
-            Product p1 = new Product(0, "LTB Acrylic Paint Red", 149.99, 50, "LTB", "Red", "Acrylic", LocalDate.now(), null, "Active");
-            Product p2 = new Product(0, "LTB Enamel Paint Blue", 129.99, 30, "LTB", "Blue", "Enamel", LocalDate.now(), null, "Active");
-            Product p3 = new Product(0, "LTB Latex Paint White", 99.99, 40, "LTB", "White", "Latex", LocalDate.now(), null, "Active");
-            Product p4 = new Product(0, "LTB Primer Gray", 89.99, 25, "LTB", "Gray", "Primer", LocalDate.now(), null, "Active");
-            Product p5 = new Product(0, "LTB Wood Stain Walnut", 129.50, 20, "LTB", "Brown", "Wood", LocalDate.now(), null, "Active");
-
-            ProductDAO.add(p1);
-            ProductDAO.add(p2);
-            ProductDAO.add(p3);
-            ProductDAO.add(p4);
-            ProductDAO.add(p5);
-
-            System.out.println("Seed data inserted.");
-        } catch (Exception e) {
-            System.err.println("Seeding failed: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }

@@ -9,10 +9,8 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Controller layer between InventoryDAO and the UI panels.
- * Handles logic for adding, updating, deleting, and filtering inventory items.
- */
+ // Controller layer between InventoryDAO and the UI panels.
+ // Handles logic for adding, updating, deleting, and filtering inventory items.
 public class InventoryController {
 
     private final InventoryDAO inventoryDAO;
@@ -29,10 +27,7 @@ public class InventoryController {
         this.view = new LTBPaintCenter.view.InventoryPanel(this);
     }
 
-    // ───────────────────────────────
     // CRUD operations
-    // ───────────────────────────────
-
     public boolean addBatch(String productCode, String name, String brand, String color, String type, double price, int qty,
                             LocalDate dateImported, LocalDate expirationDate) {
 
@@ -55,9 +50,8 @@ public class InventoryController {
         return inventoryDAO.deleteBatch(id);
     }
 
-    // ───────────────────────────────
+
     // POS filtering
-    // ───────────────────────────────
     public List<InventoryBatch> getAvailableForPOS() {
         inventoryDAO.refreshStatuses();
         List<InventoryBatch> all = inventoryDAO.getAllBatches();
@@ -67,9 +61,7 @@ public class InventoryController {
                 .toList();
     }
 
-    // ───────────────────────────────
     // Helper: determine status
-    // ───────────────────────────────
     private String determineStatus(LocalDate expirationDate, int qty) {
         LocalDate today = LocalDate.now();
         if (expirationDate != null) {
@@ -88,9 +80,7 @@ public class InventoryController {
         }
     }
 
-    // ───────────────────────────────
-    // Log updates for MonitoringPanel
-    // ───────────────────────────────
+    // Log updates for Monitoring
     public String generateStatusLogs() {
         StringBuilder logs = new StringBuilder();
         List<InventoryBatch> batches = getAllBatches();
@@ -116,9 +106,7 @@ public class InventoryController {
         return logs.toString();
     }
 
-    // ───────────────────────────────
-    // View accessors for MainFrame/MainController
-    // ───────────────────────────────
+    // View accessors for the Mainframe
     public javax.swing.JPanel getView() {
         return view;
     }

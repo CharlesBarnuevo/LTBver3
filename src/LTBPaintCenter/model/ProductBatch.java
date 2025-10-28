@@ -28,22 +28,12 @@ public class ProductBatch {
         this.status = computeStatus();
     }
 
-    public ProductBatch(String name, String brand, String color, String type,
-                        double price, int quantity, LocalDate dateImported, LocalDate expirationDate) {
-        this(-1, name, brand, color, type, price, quantity, dateImported, expirationDate);
-    }
-
     private String computeStatus() {
         if (expirationDate == null) return "Active";
         return expirationDate.isBefore(LocalDate.now()) ? "Expired" : "Active";
     }
 
-    public void updateStatus() {
-        this.status = computeStatus();
-    }
-
-    // --- Getters and Setters ---
-
+    // Getters and Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -63,18 +53,9 @@ public class ProductBatch {
     public void setPrice(double price) { this.price = price; }
 
     public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
-
-    public LocalDate getDateImported() { return dateImported; }
-    public void setDateImported(LocalDate dateImported) { this.dateImported = dateImported; }
 
     public LocalDate getExpirationDate() { return expirationDate; }
-    public void setExpirationDate(LocalDate expirationDate) {
-        this.expirationDate = expirationDate;
-        updateStatus();
-    }
 
-    public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
     // Convenience helpers for UI and business logic

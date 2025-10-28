@@ -1,8 +1,9 @@
 package LTBPaintCenter.controller;
 
+import LTBPaintCenter.dao.ProductDAO;
+import LTBPaintCenter.dao.TransactionsDAO;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.MonitoringPanel;
-import LTBPaintCenter.model.Global;
 
 import javax.swing.*;
 import java.text.SimpleDateFormat;
@@ -56,27 +57,6 @@ public class MonitoringController {
                 view.getBarChartPanel().setData(typeTotals);
             } else {
                 view.getBarChartPanel().setData(brandTotals);
-            }
-        });
-
-        // Reset/Clear all transactions from database
-        view.getBtnResetTransactions().addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(view,
-                    "This will permanently delete ALL recorded transactions from the database.\nThis cannot be undone. Proceed?",
-                    "Confirm Reset",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-            if (confirm != JOptionPane.YES_OPTION) return;
-
-            try {
-                TransactionsDAO.clearAllSales();
-                // Reload in-memory sales from DB (now empty)
-                report.loadFromDatabase();
-                refresh();
-                JOptionPane.showMessageDialog(view, "All transactions have been cleared.");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(view, "Failed to clear transactions: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                ex.printStackTrace();
             }
         });
     }
