@@ -1,6 +1,7 @@
 package LTBPaintCenter.controller;
 
 import LTBPaintCenter.dao.InventoryDAO;
+import LTBPaintCenter.model.AdminAuthUtil;
 import LTBPaintCenter.model.Database;
 import LTBPaintCenter.model.InventoryBatch;
 
@@ -9,8 +10,6 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
- // Controller layer between InventoryDAO and the UI panels.
- // Handles logic for adding, updating, deleting, and filtering inventory items.
 public class InventoryController {
 
     private final InventoryDAO inventoryDAO;
@@ -27,13 +26,17 @@ public class InventoryController {
         this.view = new LTBPaintCenter.view.InventoryPanel(this);
     }
 
-    // CRUD operations
+    // CRUD operations — always require admin password popup
     public boolean addBatch(String productCode, String name, String brand, String color, String type, double price, int qty,
                             LocalDate dateImported, LocalDate expirationDate) {
 
+        boolean ok = AdminAuthUtil.requireAdminPasswordPopup(view);
+        if (!ok) return false;
+
         String status = determineStatus(expirationDate, qty);
         InventoryBatch batch = new InventoryBatch(0, productCode, name, brand, color, type, price, qty, dateImported, expirationDate, status);
-        return inventoryDAO.addBatch(batch);
+        boolean added = inventoryDAO.addBatch(batch);
+        return added;
     }
 
     public List<InventoryBatch> getAllBatches() {
@@ -42,11 +45,17 @@ public class InventoryController {
     }
 
     public boolean updateBatch(InventoryBatch batch) {
+        boolean ok = AdminAuthUtil.requireAdminPasswordPopup(view);
+        if (!ok) return false;
+
         batch.setStatus(determineStatus(batch.getExpirationDate(), batch.getQuantity()));
         return inventoryDAO.updateBatch(batch);
     }
 
     public boolean deleteBatch(int id) {
+        boolean ok = AdminAuthUtil.requireAdminPasswordPopup(view);
+        if (!ok) return false;
+
         return inventoryDAO.deleteBatch(id);
     }
 
