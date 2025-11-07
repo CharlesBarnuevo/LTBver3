@@ -15,7 +15,6 @@ public class MainFrame extends JFrame {
     private final JPanel sidebar = new JPanel(new BorderLayout());
     private final JPanel navPanel = new JPanel(new GridLayout(5, 1, 10, 10));
 
-    // Separate sections in the left sidebar
     private JPanel posSectionPanel;
     private JPanel inventorySectionPanel;
     private JPanel monitoringSectionPanel;
@@ -35,7 +34,6 @@ public class MainFrame extends JFrame {
     private final InventoryController inventoryController;
     private final MonitoringController monitoringController;
 
-    // Change Password button (shown only in Admin mode)
     private JButton changePasswordButton;
 
     public MainFrame(POSController posCtrl, InventoryController invCtrl, MonitoringController monCtrl) {
@@ -54,7 +52,6 @@ public class MainFrame extends JFrame {
         add(sidebar, BorderLayout.WEST);
         add(mainPanel, BorderLayout.CENTER);
 
-        // Status bar with system date/time (lower left)
         JPanel statusBar = new JPanel(new BorderLayout());
         statusBar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(210,210,210)));
         statusBar.setBackground(Color.WHITE);
@@ -116,7 +113,6 @@ public class MainFrame extends JFrame {
         styleSidebarButton(btnInventory);
         styleSidebarButton(btnMonitoring);
 
-        // Single navigation panel with larger buttons for POS, Inventory, Monitoring
         JPanel navButtonsPanel = new JPanel();
         navButtonsPanel.setOpaque(false);
         navButtonsPanel.setLayout(new GridLayout(3, 1, 10, 10));
@@ -125,7 +121,6 @@ public class MainFrame extends JFrame {
         navButtonsPanel.add(btnInventory);
         navButtonsPanel.add(btnMonitoring);
 
-        // Change Password section (Admin only)
         changePasswordSectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         changePasswordSectionPanel.setOpaque(false);
         changePasswordSectionPanel.setBorder(BorderFactory.createTitledBorder("Security"));
@@ -203,26 +198,27 @@ public class MainFrame extends JFrame {
         updateAccess();
     }
 
+    public void setAdminMode(boolean admin) {
+        this.isAdmin = admin;
+        if (lblRole != null) lblRole.setText(admin ? "Admin" : "Cashier");
+        updateAccess();
+    }
+
     private void updateAccess() {
-        // Buttons enabled state
         btnInventory.setEnabled(isAdmin);
         btnMonitoring.setEnabled(isAdmin);
 
-        // Tooltips
         btnPOS.setToolTipText("Point of Sale");
         btnInventory.setToolTipText(isAdmin ? "Inventory Management" : "Admin access required");
         btnMonitoring.setToolTipText(isAdmin ? "Sales Monitoring" : "Admin access required");
 
-        // Background to hint disabled state
         Color disabledGray = new Color(200, 200, 200);
         btnInventory.setBackground(isAdmin ? new Color(220, 220, 220) : disabledGray);
         btnMonitoring.setBackground(isAdmin ? new Color(220, 220, 220) : disabledGray);
 
-        // Section visibility/enabled
         if (inventorySectionPanel != null) setPanelEnabled(inventorySectionPanel, isAdmin);
         if (monitoringSectionPanel != null) setPanelEnabled(monitoringSectionPanel, isAdmin);
 
-        // Change Password section only appears in Admin
         if (changePasswordButton != null) {
             changePasswordButton.setVisible(isAdmin);
             changePasswordButton.setEnabled(isAdmin);

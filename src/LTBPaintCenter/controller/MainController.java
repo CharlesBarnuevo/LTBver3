@@ -41,6 +41,10 @@ public class MainController {
         frame.setVisible(true);
     }
 
+    public LTBPaintCenter.view.MainFrame getFrame() {
+        return frame;
+    }
+
     private void initializeControllers() {
         posController = new POSController(inventory, report);
         inventoryController = new InventoryController();
