@@ -3,6 +3,7 @@ package LTBPaintCenter.view;
 import LTBPaintCenter.model.InventoryBatch;
 import LTBPaintCenter.model.Sale;
 import LTBPaintCenter.model.SaleItem;
+import LTBPaintCenter.util.ReceiptPrinter;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -481,18 +482,24 @@ public class MonitoringPanel extends JPanel {
         sp.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
         dlg.add(sp, BorderLayout.CENTER);
 
-        // Footer with total and Close button
+        // Footer with total, Show Receipt button, and Close button
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
         JLabel lblTotal = new JLabel(String.format("Total: ₱%.2f", sale.getTotal()));
         lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 13));
         footer.add(lblTotal, BorderLayout.WEST);
 
-        JButton btnClose = new JButton("Close");
-        btnClose.addActionListener(e -> dlg.dispose());
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnPanel.setOpaque(false);
+
+        JButton btnShowReceipt = new JButton("Show Receipt");
+        btnShowReceipt.addActionListener(e -> showReceiptDialog(sale));
+        btnPanel.add(btnShowReceipt);
+
+        JButton btnClose = new JButton("Close");
+        btnClose.addActionListener(e -> dlg.dispose());
         btnPanel.add(btnClose);
+
         footer.add(btnPanel, BorderLayout.EAST);
 
         dlg.add(footer, BorderLayout.SOUTH);
@@ -505,4 +512,48 @@ public class MonitoringPanel extends JPanel {
     // For updating alerts externally
     public JButton getBtnResetTransactions() { return btnResetTransactions; }
     public JTextArea getTaAlerts() { return taAlerts; }
+
+    /**
+     * Shows a dialog displaying the receipt for the given sale.
+     *
+     * @param sale The sale to generate receipt for
+     */
+    private void showReceiptDialog(Sale sale) {
+        if (sale == null) return;
+
+        java.awt.Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dlg = owner instanceof java.awt.Frame
+                ? new JDialog((java.awt.Frame) owner, "Receipt", true)
+                : new JDialog(owner, "Receipt", Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dlg.setLayout(new BorderLayout(8, 8));
+        dlg.getContentPane().setBackground(Color.WHITE);
+        dlg.getRootPane().setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Generate receipt text
+        String receiptText = ReceiptPrinter.generateReceiptText(sale.getItems(), sale.getId());
+
+        // Create text area for receipt
+        JTextArea taReceipt = new JTextArea(receiptText);
+        taReceipt.setEditable(false);
+        taReceipt.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        taReceipt.setBackground(Color.WHITE);
+        taReceipt.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JScrollPane scroll = new JScrollPane(taReceipt);
+        scroll.setBorder(BorderFactory.createLineBorder(new Color(220, 220, 220)));
+        dlg.add(scroll, BorderLayout.CENTER);
+
+        // Footer with Close button
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        footer.setOpaque(false);
+        JButton btnClose = new JButton("Close");
+        btnClose.addActionListener(e -> dlg.dispose());
+        footer.add(btnClose);
+        dlg.add(footer, BorderLayout.SOUTH);
+
+        dlg.setSize(450, 600);
+        dlg.setLocationRelativeTo(owner);
+        dlg.setVisible(true);
+    }
 }
