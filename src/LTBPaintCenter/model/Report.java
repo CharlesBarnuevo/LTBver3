@@ -155,13 +155,4 @@ public class Report {
     public List<Sale> getSales() {
         return Collections.unmodifiableList(sales);
     }
-
-    /**
-     * Gets cumulative sales totals by product ID.
-     * 
-     * @return An unmodifiable map of product ID to total quantity sold
-     */
-    public Map<Integer, Integer> getCumulativeProductSales() {
-        return Collections.unmodifiableMap(cumulativeProductSales);
-    }
 }

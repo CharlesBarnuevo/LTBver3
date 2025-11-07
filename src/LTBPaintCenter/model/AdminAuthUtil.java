@@ -10,10 +10,6 @@ import java.awt.*;
  * All methods are static since this is a utility class.
  */
 public final class AdminAuthUtil {
-    
-    // Private constructor prevents instantiation (utility class)
-    private AdminAuthUtil() {
-    }
 
     /**
      * Shows a password dialog and verifies the admin password.

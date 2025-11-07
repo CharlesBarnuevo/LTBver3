@@ -4,7 +4,6 @@ import LTBPaintCenter.dao.ProductDAO;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.MonitoringPanel;
 import javax.swing.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -17,8 +16,6 @@ public class MonitoringController {
     private final Report report;
     private final Inventory inventory;
     private final MonitoringPanel view;
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
     // Track revenue totals by brand and type
     private final Map<String, Double> brandTotals = new LinkedHashMap<>();
     private final Map<String, Double> typeTotals = new LinkedHashMap<>();

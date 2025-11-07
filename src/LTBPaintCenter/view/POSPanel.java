@@ -1,16 +1,11 @@
 package LTBPaintCenter.view;
 
-import LTBPaintCenter.model.Product;
 import LTBPaintCenter.model.ProductBatch;
 import LTBPaintCenter.model.SaleItem;
-import LTBPaintCenter.model.AlertManager;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
 
@@ -58,8 +53,6 @@ public class POSPanel extends JPanel {
     };
     private final JTable cartTable = new JTable(cartTableModel);
     private final JLabel lblSubtotalLabel = new JLabel("Subtotal: ₱0.00");
-    private final JLabel lblVatable = new JLabel("VATable: ₱0.00");
-    private final JLabel lblVatExempt = new JLabel("Non-VAT: ₱0.00");
     private final JLabel lblVAT = new JLabel("VAT (12%): ₱0.00");
     private final JLabel lblTotal = new JLabel("TOTAL: ₱0.00");
 
@@ -83,9 +76,6 @@ public class POSPanel extends JPanel {
     // Checkout handler
     public interface CheckoutHandler { boolean handleCheckout(List<SaleItem> cartSnapshot); }
     private CheckoutHandler checkoutHandler = null;
-
-    // Expiration awareness
-    private final AlertManager alertManager = new AlertManager();
 
     public POSPanel() {
         setLayout(new BorderLayout(10, 10));
@@ -471,8 +461,6 @@ public class POSPanel extends JPanel {
             java.math.BigDecimal vatable = subtotal.divide(java.math.BigDecimal.valueOf(1.12), 2, java.math.RoundingMode.HALF_UP);
 
             java.math.BigDecimal vat = subtotal.subtract(vatable).setScale(2, java.math.RoundingMode.HALF_UP);
-
-            java.math.BigDecimal nonVat = java.math.BigDecimal.ZERO;
 
             java.math.BigDecimal total = subtotal.setScale(2, java.math.RoundingMode.HALF_UP);
 

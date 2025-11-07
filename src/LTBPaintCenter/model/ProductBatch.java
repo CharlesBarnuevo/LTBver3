@@ -16,7 +16,6 @@ public class ProductBatch {
     private String type;
     private double price;
     private int quantity;
-    private LocalDate dateImported;
     private LocalDate expirationDate;
     private String status;  // "Active" or "Expired"
 
@@ -33,7 +32,6 @@ public class ProductBatch {
         this.type = type;
         this.price = price;
         this.quantity = quantity;
-        this.dateImported = dateImported;
         this.expirationDate = expirationDate;
         this.status = computeStatus();
     }

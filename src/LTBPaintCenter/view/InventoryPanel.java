@@ -11,6 +11,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * This panel provides the Inventory interface.
+ * It displays the list of products and its status where you can update and remove it,
+ * This section manages the products in the inventory with CRUD.
+ */
 public class InventoryPanel extends JPanel {
     private final InventoryController controller;
     private final DefaultTableModel tableModel;

@@ -21,7 +21,6 @@ public class MainFrame extends JFrame {
     private final JPanel sidebar = new JPanel(new BorderLayout());
     private final JPanel navPanel = new JPanel(new GridLayout(5, 1, 10, 10));
 
-    private JPanel posSectionPanel;
     private JPanel inventorySectionPanel;
     private JPanel monitoringSectionPanel;
     private JPanel changePasswordSectionPanel;

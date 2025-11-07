@@ -13,8 +13,6 @@ public class App {
     /**
      * Main method - starts the application.
      * First initializes the database, then shows the login screen.
-     * 
-     * @param args Command line arguments (not used)
      */
     public static void main(String[] args) {
         // Set up the database tables if they don't exist

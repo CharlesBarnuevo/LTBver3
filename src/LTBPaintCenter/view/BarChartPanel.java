@@ -44,9 +44,7 @@ public class BarChartPanel extends JPanel {
         int barHeight = 25;
         int x = 100;
         int y = 40;
-        int labelWidth = 80;
-
-        FontMetrics fm = g2.getFontMetrics();
+        g2.getFontMetrics();
 
         for (Map.Entry<String, Double> entry : data.entrySet()) {
             String label = entry.getKey();

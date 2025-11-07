@@ -32,14 +32,4 @@ public class Global {
     public static boolean isAdmin() {
         return isAdminMode;
     }
-
-    /**
-     * Resets the user session.
-     * Clears the current user and disables admin mode.
-     * Called when user logs out.
-     */
-    public static void resetSession() {
-        currentUser = null;
-        isAdminMode = false;
-    }
 }

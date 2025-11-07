@@ -61,8 +61,7 @@ public class MonitoringPanel extends JPanel {
     private List<Sale> currentSales;
     private static class RowRef {
         final Sale sale;
-        final SaleItem item;
-        RowRef(Sale sale, SaleItem item) { this.sale = sale; this.item = item; }
+        RowRef(Sale sale, SaleItem item) { this.sale = sale; }
     }
     private final java.util.List<RowRef> currentRows = new java.util.ArrayList<>();
 
@@ -441,7 +440,7 @@ public class MonitoringPanel extends JPanel {
         dlg.getContentPane().setBackground(Color.WHITE);
         dlg.getRootPane().setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Header: Reference No and Date
+        // Header: Reference No. and Date
         JPanel header = new JPanel(new GridLayout(2, 1));
         header.setOpaque(false);
         SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
