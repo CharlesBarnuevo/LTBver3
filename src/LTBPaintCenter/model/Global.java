@@ -9,6 +9,8 @@ public class Global {
     public static Inventory inventory;
     public static Report report;
 
+    public static String currentUser = null;
+
     public static POSController posController;
     public static InventoryController inventoryController;
     public static MonitoringController monitoringController;

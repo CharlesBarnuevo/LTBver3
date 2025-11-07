@@ -6,10 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-/**
- * Manages the persistent admin password stored in SQLite.
- * Passwords are stored as SHA-256 hash over (salt + password).
- */
+
 public class AdminDAO {
 
     // ===== Public API =====

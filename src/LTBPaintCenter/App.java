@@ -1,13 +1,15 @@
 package LTBPaintCenter;
 
 import javax.swing.SwingUtilities;
-
-import LTBPaintCenter.controller.InventoryController;
-import LTBPaintCenter.controller.MainController;
+import LTBPaintCenter.controller.LoginController;
+import LTBPaintCenter.model.DatabaseSetup;
 
 public class App {
     public static void main(String[] args) {
-        LTBPaintCenter.model.DatabaseSetup.initializeDatabase();
-        SwingUtilities.invokeLater(() -> new MainController());
+        DatabaseSetup.initializeDatabase();
+
+        SwingUtilities.invokeLater(() -> {
+            new LoginController().show();
+        });
     }
 }
