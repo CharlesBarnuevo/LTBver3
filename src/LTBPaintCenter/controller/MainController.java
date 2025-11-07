@@ -1,6 +1,7 @@
 package LTBPaintCenter.controller;
 
 import LTBPaintCenter.dao.ProductDAO;
+import LTBPaintCenter.dao.SaleReferenceGenerator;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.MainFrame;
 import LTBPaintCenter.util.ReceiptPrinter;
@@ -126,7 +127,8 @@ public class MainController {
 
         // Show checkout dialog with summary (VATable, Non-VAT, Subtotal, VAT 12%, Total)
         java.awt.Frame owner = frame;
-        LTBPaintCenter.view.CheckoutDialog dialog = new LTBPaintCenter.view.CheckoutDialog(owner, cart);
+        String referenceNo = SaleReferenceGenerator.generateSaleReference(LocalDate.now());
+        LTBPaintCenter.view.CheckoutDialog dialog = new LTBPaintCenter.view.CheckoutDialog(owner, cart, referenceNo);
         dialog.setVisible(true);
         
         // If user cancelled, don't proceed with checkout
@@ -135,12 +137,6 @@ public class MainController {
         }
 
         try {
-            // Generate a unique reference number for this sale
-            // Format: yyyyMMddHHmmss + 3 random digits
-            String referenceNo = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
-                    .format(new java.util.Date()) +
-                    String.format("%03d", new java.util.Random().nextInt(1000));
-            
             // Create a new sale with this reference number
             Sale sale = new Sale(referenceNo);
 

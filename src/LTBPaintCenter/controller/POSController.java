@@ -1,9 +1,11 @@
 package LTBPaintCenter.controller;
 
 import LTBPaintCenter.dao.ProductDAO;
+import LTBPaintCenter.dao.SaleReferenceGenerator;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.POSPanel;
 import javax.swing.*;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -59,17 +61,17 @@ public class POSController {
             owner = frame;
         }
         
+        String referenceNo = SaleReferenceGenerator.generateSaleReference(LocalDate.now());
         LTBPaintCenter.view.CheckoutDialog dialog = 
-                new LTBPaintCenter.view.CheckoutDialog(owner, cart);
+                new LTBPaintCenter.view.CheckoutDialog(owner, cart, referenceNo);
         dialog.setVisible(true);
         
         if (!dialog.isConfirmed()) {
             return false;  // User cancelled
         }
 
-        // Generate a sale ID
-        String saleId = "S" + (report.getSales().size() + 1);
-        Sale sale = new Sale(saleId);
+        // Generate a sale ID using the shared MMDDYYXXX pattern
+        Sale sale = new Sale(referenceNo);
 
         try {
             // Process each item in the cart

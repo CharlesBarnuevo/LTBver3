@@ -13,42 +13,38 @@ import java.util.List;
  * User can confirm or cancel the transaction.
  */
 public class CheckoutDialog extends JDialog {
-    
-    private double subtotal;
-    private double vatRate = 0.12;  // 12% VAT rate
-    private List<SaleItem> cartItems;
+
+    private final double subtotal;
+    private final double vatRate = 0.12;  // 12% VAT rate
+    private final List<SaleItem> cartItems;
 
     // Labels for displaying totals
-    private JLabel lblVatable = new JLabel();
-    private JLabel lblNonVat = new JLabel();
-    private JLabel lblSubtotal = new JLabel();
-    private JLabel lblVAT = new JLabel();
-    private JLabel lblTotal = new JLabel();
-    private JLabel lblRef = new JLabel();
+    private final JLabel lblVatable = new JLabel();
+    private final JLabel lblNonVat = new JLabel();
+    private final JLabel lblSubtotal = new JLabel();
+    private final JLabel lblVAT = new JLabel();
+    private final JLabel lblTotal = new JLabel();
+    private final JLabel lblRef = new JLabel();
 
     private boolean confirmed = false;
-    private String referenceNo;
+    private final String referenceNo;
 
     /**
      * Constructor - creates the checkout dialog with cart items.
-     * 
-     * @param owner The parent frame
-     * @param cartItems The list of items in the cart
+     *
+     * @param owner       The parent frame
+     * @param cartItems   The list of items in the cart
+     * @param referenceNo The pre-generated sale reference number (MMDDYYXXX)
      */
-    public CheckoutDialog(Frame owner, List<SaleItem> cartItems) {
+    public CheckoutDialog(Frame owner, List<SaleItem> cartItems, String referenceNo) {
         super(owner, "Checkout Summary", true);
         this.cartItems = cartItems;
+        this.referenceNo = referenceNo;
 
         // Calculate subtotal from all items
         this.subtotal = cartItems.stream()
                 .mapToDouble(SaleItem::getSubtotal)
                 .sum();
-
-        // Generate a unique reference number
-        // Format: yyyyMMddHHmmss + 3 random digits
-        this.referenceNo = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
-                .format(new java.util.Date()) +
-                String.format("%03d", new java.util.Random().nextInt(1000));
 
         initUI();
         updateTotals();
