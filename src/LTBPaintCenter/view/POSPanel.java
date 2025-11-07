@@ -14,13 +14,18 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.List;
 
-
+/**
+ * This panel provides the Point of Sale (POS) interface.
+ * It displays available products in a grid, allows filtering and searching,
+ * manages a shopping cart, calculates totals with VAT, and handles checkout.
+ * Products are shown as cards that can be clicked to add to cart.
+ */
 public class POSPanel extends JPanel {
     private static class ScrollableWrapPanel extends JPanel implements javax.swing.Scrollable {
-        private static final int COLS = 4; // fixed 4 items per row
+        private static final int COLS = 4;
         private static final int HGAP = 12;
         private static final int VGAP = 12;
-        private static final int PADDING = 12; // border padding inside the titled border
+        private static final int PADDING = 12;
         public ScrollableWrapPanel(LayoutManager layout) { super(layout); }
         @Override public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
         @Override public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) { return 16; }
@@ -29,7 +34,6 @@ public class POSPanel extends JPanel {
         @Override public boolean getScrollableTracksViewportHeight() { return false; }
         @Override public Dimension getPreferredSize() {
             int n = getComponentCount();
-            // Determine card size from first child or default to 222x222
             int cardW = 220, cardH = 220;
             if (n > 0) {
                 Dimension d = getComponent(0).getPreferredSize();
@@ -62,7 +66,7 @@ public class POSPanel extends JPanel {
     // Cart buttons
     private final JButton btnCheckout = new JButton("Checkout");
     private final JButton btnClear = new JButton("Clear Cart");
-    private final JButton btnRemove = new JButton("Remove Selected");
+    private final JButton btnRemove = new JButton("Remove");
 
     // Internal state
     private final Map<Integer, SaleItem> cart = new HashMap<>();
@@ -92,7 +96,6 @@ public class POSPanel extends JPanel {
         initProductArea();
         initCartArea();
 
-        // Ensure totals react to any table changes as an extra safety net
         cartTableModel.addTableModelListener(e -> updateTotal());
 
         // Wire filter listeners
@@ -191,7 +194,6 @@ public class POSPanel extends JPanel {
     }
 
     private void layoutGridToFitWidth() {
-        // Keep FlowLayout so each product card keeps its fixed preferred size (250x250) and wraps.
         productGrid.revalidate();
         productGrid.repaint();
     }
@@ -273,9 +275,7 @@ public class POSPanel extends JPanel {
     public List<SaleItem> getCartSnapshot() { return new ArrayList<>(cart.values()); }
     public void clearCart() { cart.clear(); refreshCartTable(); }
 
-    /**
-     * Refreshes product grid from batches.
-     */
+    // Refreshes product grid from batches.
     public void refreshProducts(Collection<ProductBatch> batches) {
         if (batches == null) batches = Collections.emptyList();
 
@@ -321,8 +321,6 @@ public class POSPanel extends JPanel {
 
         java.util.List<ProductBatch> list = new ArrayList<>();
         for (ProductBatch b : batches) {
-            // Do not hide expired products here — show everything in the grid so users can see full catalog.
-            // Expired items are still blocked from being added to the cart during selection.
 
             boolean brandOk = selectedBrand.equals("All Brands") || selectedBrand.equals(b.getBrand());
             boolean colorOk = selectedColor.equals("All Colors") || selectedColor.equals(b.getColor());

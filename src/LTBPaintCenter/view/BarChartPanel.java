@@ -4,6 +4,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 
+/**
+ * This panel displays a horizontal bar chart for revenue visualization.
+ * It shows revenue data by brand or type, with bars proportional to values.
+ * Used in the Monitoring panel to visualize sales breakdowns.
+ */
 public class BarChartPanel extends JPanel {
     private Map<String, Double> data;
     private double maxValue;

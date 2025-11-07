@@ -1,21 +1,20 @@
-package LTBPaintCenter.model;
+package LTBPaintCenter.dao;
 
+import LTBPaintCenter.model.Database;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * This class provides lookup functionality for database tables.
- * NOTE: This is a duplicate of LTBPaintCenter.dao.LookupDAO.
- * This file should be removed and the dao.LookupDAO should be used instead.
- * 
- * @deprecated Use LTBPaintCenter.dao.LookupDAO instead
+ * It can retrieve all values from a specific column in any table.
+ * Used for populating dropdown lists and combo boxes.
  */
-@Deprecated
 public class LookupDAO {
 
     /**
      * Gets all values from the "name" column of a specified table.
+     * Used to get lists of brands, colors, types, etc. for dropdown menus.
      * 
      * @param table The name of the table to query
      * @return A list of all name values, ordered alphabetically
@@ -36,26 +35,5 @@ public class LookupDAO {
         }
         
         return values;
-    }
-
-    /**
-     * Adds a value to a lookup table if it doesn't already exist.
-     * 
-     * @param table The name of the lookup table
-     * @param value The value to add
-     */
-    public static void addIfNotExists(String table, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
-        
-        String sql = "INSERT OR IGNORE INTO " + table + " (name) VALUES (?)";
-        try (Connection conn = Database.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, value.trim());
-            pstmt.executeUpdate();
-        } catch (Exception e) {
-            System.err.println("Failed to add to " + table + ": " + e.getMessage());
-        }
     }
 }

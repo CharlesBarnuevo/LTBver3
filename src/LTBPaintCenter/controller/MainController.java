@@ -1,16 +1,20 @@
 package LTBPaintCenter.controller;
 
+import LTBPaintCenter.dao.ProductDAO;
 import LTBPaintCenter.model.*;
 import LTBPaintCenter.view.MainFrame;
 import LTBPaintCenter.util.ReceiptPrinter;
-
 import javax.swing.*;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
-// Main Controller — central hub connecting POS, Inventory, and Monitoring.
+/**
+ * This is the main controller that coordinates all the other controllers.
+ * It manages the POS (Point of Sale), Inventory, and Monitoring systems.
+ * Acts as the central hub connecting all parts of the application.
+ */
 public class MainController {
+    
     private final Inventory inventory;
     private final Report report;
     private MainFrame frame;
@@ -19,40 +23,66 @@ public class MainController {
     private InventoryController inventoryController;
     private MonitoringController monitoringController;
 
+    /**
+     * Constructor - sets up the entire application.
+     * Initializes inventory, reports, controllers, and loads data from database.
+     */
     public MainController() {
+        // Create the main data models
         inventory = new Inventory();
         report = new Report();
+        
+        // Store them globally so other parts of the app can access them
         Global.inventory = inventory;
         Global.report = report;
 
-        // Load persisted sales before building views so Monitoring shows them
+        // Load previous sales from database so monitoring can show them
         try {
             report.loadFromDatabase();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // If there are no previous sales, that's okay
+        }
 
+        // Set up all the controllers and the main window
         initializeControllers();
         initializeFrame();
-
         loadProductsFromDatabase();
 
+        // Connect the checkout handler to the POS panel
         posController.getView().setCheckoutHandler(this::handleCheckout);
 
+        // Show the POS panel by default when the app starts
         frame.showPanel("POS");
         frame.setVisible(true);
     }
 
+    /**
+     * Gets the main window frame.
+     * 
+     * @return The MainFrame window
+     */
+    public LTBPaintCenter.view.MainFrame getFrame() {
+        return frame;
+    }
+
+    /**
+     * Creates and initializes all the controllers.
+     * Also stores them in the Global class for easy access.
+     */
     private void initializeControllers() {
         posController = new POSController(inventory, report);
         inventoryController = new InventoryController();
         monitoringController = new MonitoringController(report, inventory);
 
+        // Store controllers globally for access from other parts of the app
         Global.inventoryController = inventoryController;
         Global.posController = posController;
         Global.monitoringController = monitoringController;
-
-        System.out.println("InventoryController view hash: " + inventoryController.getView().hashCode());
     }
 
+    /**
+     * Creates the main window and adds all the panels to it.
+     */
     private void initializeFrame() {
         frame = new MainFrame(posController, inventoryController, monitoringController);
         frame.addPanel(posController.getView(), "POS");
@@ -60,72 +90,111 @@ public class MainController {
         frame.addPanel(monitoringController.getView(), "Monitoring");
     }
 
+    /**
+     * Loads all products from the database into the inventory.
+     * Also refreshes the inventory and POS views to show the latest data.
+     */
     private void loadProductsFromDatabase() {
+        // Clear existing inventory
         inventory.clear();
+        
+        // Get all products from database
         List<Product> dbProducts = ProductDAO.getAll();
-        for (Product p : dbProducts) {
-            inventory.addProduct(p);
+        for (Product product : dbProducts) {
+            inventory.addProduct(product);
         }
 
+        // Refresh all views to show the updated data
         inventoryController.refreshInventory();
-        // POS view expects batches, provide adapted collection
         posController.getView().refreshProducts(inventory.getAllBatches());
         monitoringController.refresh();
     }
 
+    /**
+     * Handles the checkout process when a sale is completed.
+     * Creates a sale record, updates inventory, and optionally saves a PDF receipt.
+     * 
+     * @param cart The list of items being purchased
+     * @return true if checkout was successful, false otherwise
+     */
     private boolean handleCheckout(List<SaleItem> cart) {
+        // Check if cart is empty
         if (cart == null || cart.isEmpty()) {
             JOptionPane.showMessageDialog(frame, "Cart is empty");
             return false;
         }
 
-        // Show checkout summary dialog with VATable, Non-VAT, Subtotal, VAT (12%), and TOTAL
+        // Show checkout dialog with summary (VATable, Non-VAT, Subtotal, VAT 12%, Total)
         java.awt.Frame owner = frame;
         LTBPaintCenter.view.CheckoutDialog dialog = new LTBPaintCenter.view.CheckoutDialog(owner, cart);
         dialog.setVisible(true);
+        
+        // If user cancelled, don't proceed with checkout
         if (!dialog.isConfirmed()) {
-            return false; // User cancelled
+            return false;
         }
 
         try {
-            String referenceNo = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date()) +
+            // Generate a unique reference number for this sale
+            // Format: yyyyMMddHHmmss + 3 random digits
+            String referenceNo = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
+                    .format(new java.util.Date()) +
                     String.format("%03d", new java.util.Random().nextInt(1000));
+            
+            // Create a new sale with this reference number
             Sale sale = new Sale(referenceNo);
 
+            // Process each item in the cart
             for (SaleItem item : cart) {
                 sale.addItem(item);
 
-                Product p = inventory.getProduct(item.getProductId());
-                if (p != null) {
-                    int newQty = Math.max(0, p.getQuantity() - item.getQty());
-                    p.setQuantity(newQty);
-                    ProductDAO.update(p);
+                // Update inventory - reduce quantity by the amount sold
+                Product product = inventory.getProduct(item.getProductId());
+                if (product != null) {
+                    int newQuantity = Math.max(0, product.getQuantity() - item.getQty());
+                    product.setQuantity(newQuantity);
+                    ProductDAO.update(product);
                 }
             }
 
+            // Record the sale in the report
             report.recordSale(sale);
+            
+            // Refresh all views to show updated data
             monitoringController.refresh();
             inventoryController.refreshInventory();
-
             loadProductsFromDatabase();
 
-            // Ask user to save a PDF receipt
-            int choice = JOptionPane.showConfirmDialog(frame, "Would you like to save the receipt as PDF?", "Save Receipt", JOptionPane.YES_NO_OPTION);
+            // Ask user if they want to save a PDF receipt
+            int choice = JOptionPane.showConfirmDialog(frame, 
+                    "Would you like to save the receipt as PDF?", 
+                    "Save Receipt", 
+                    JOptionPane.YES_NO_OPTION);
+            
             if (choice == JOptionPane.YES_OPTION) {
-                // Use the same reference number used for the sale
+                // Let user choose where to save the PDF
                 JFileChooser chooser = new JFileChooser();
                 chooser.setDialogTitle("Save Receipt PDF");
                 chooser.setSelectedFile(new java.io.File("receipt_" + referenceNo + ".pdf"));
-                int res = chooser.showSaveDialog(frame);
-                if (res == JFileChooser.APPROVE_OPTION) {
-                    java.io.File f = chooser.getSelectedFile();
-                    String path = f.getAbsolutePath();
-                    if (!path.toLowerCase().endsWith(".pdf")) path += ".pdf";
+                
+                int result = chooser.showSaveDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    java.io.File file = chooser.getSelectedFile();
+                    String path = file.getAbsolutePath();
+                    
+                    // Make sure the file ends with .pdf
+                    if (!path.toLowerCase().endsWith(".pdf")) {
+                        path += ".pdf";
+                    }
+                    
                     try {
                         ReceiptPrinter.saveAsPDF(cart, path, referenceNo);
                         JOptionPane.showMessageDialog(frame, "Receipt saved to: " + path);
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(frame, "Failed to save PDF: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, 
+                                "Failed to save PDF: " + ex.getMessage(), 
+                                "Error", 
+                                JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
@@ -137,37 +206,6 @@ public class MainController {
             JOptionPane.showMessageDialog(frame, "Checkout failed: " + e.getMessage());
             e.printStackTrace();
             return false;
-        }
-    }
-
-    public static void seedData() {
-        DatabaseSetup.initializeDatabase();
-
-        List<Product> existing = ProductDAO.getAll();
-        if (!existing.isEmpty()) {
-            System.out.println("Products already exist — skipping seed.");
-            return;
-        }
-
-        System.out.println("Seeding default products into database...");
-
-        try {
-            Product p1 = new Product(0, "LTB Acrylic Paint Red", 149.99, 50, "LTB", "Red", "Acrylic", LocalDate.now(), null, "Active");
-            Product p2 = new Product(0, "LTB Enamel Paint Blue", 129.99, 30, "LTB", "Blue", "Enamel", LocalDate.now(), null, "Active");
-            Product p3 = new Product(0, "LTB Latex Paint White", 99.99, 40, "LTB", "White", "Latex", LocalDate.now(), null, "Active");
-            Product p4 = new Product(0, "LTB Primer Gray", 89.99, 25, "LTB", "Gray", "Primer", LocalDate.now(), null, "Active");
-            Product p5 = new Product(0, "LTB Wood Stain Walnut", 129.50, 20, "LTB", "Brown", "Wood", LocalDate.now(), null, "Active");
-
-            ProductDAO.add(p1);
-            ProductDAO.add(p2);
-            ProductDAO.add(p3);
-            ProductDAO.add(p4);
-            ProductDAO.add(p5);
-
-            System.out.println("Seed data inserted.");
-        } catch (Exception e) {
-            System.err.println("Seeding failed: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }

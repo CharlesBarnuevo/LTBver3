@@ -1,18 +1,24 @@
 package LTBPaintCenter.view;
 
 import LTBPaintCenter.model.SaleItem;
-
 import javax.swing.*;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * This dialog shows a checkout summary before completing a sale.
+ * Displays VATable amount, VAT, subtotal, and total.
+ * User can confirm or cancel the transaction.
+ */
 public class CheckoutDialog extends JDialog {
+    
     private double subtotal;
-    private double vatRate = 0.12; // 12% VAT
+    private double vatRate = 0.12;  // 12% VAT rate
     private List<SaleItem> cartItems;
 
+    // Labels for displaying totals
     private JLabel lblVatable = new JLabel();
     private JLabel lblNonVat = new JLabel();
     private JLabel lblSubtotal = new JLabel();
@@ -21,31 +27,43 @@ public class CheckoutDialog extends JDialog {
     private JLabel lblRef = new JLabel();
 
     private boolean confirmed = false;
-
     private String referenceNo;
 
+    /**
+     * Constructor - creates the checkout dialog with cart items.
+     * 
+     * @param owner The parent frame
+     * @param cartItems The list of items in the cart
+     */
     public CheckoutDialog(Frame owner, List<SaleItem> cartItems) {
         super(owner, "Checkout Summary", true);
         this.cartItems = cartItems;
 
+        // Calculate subtotal from all items
         this.subtotal = cartItems.stream()
                 .mapToDouble(SaleItem::getSubtotal)
                 .sum();
 
-        // Simple reference number: yyyymmddHHMMss + random 3 digits
-        this.referenceNo = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new java.util.Date()) +
+        // Generate a unique reference number
+        // Format: yyyyMMddHHmmss + 3 random digits
+        this.referenceNo = new java.text.SimpleDateFormat("yyyyMMddHHmmss")
+                .format(new java.util.Date()) +
                 String.format("%03d", new java.util.Random().nextInt(1000));
 
         initUI();
         updateTotals();
     }
 
+    /**
+     * Initializes the user interface components.
+     */
     private void initUI() {
         setSize(420, 360);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+        // Create center panel with totals
         JPanel center = new JPanel(new GridLayout(6, 2, 10, 10));
         center.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
         center.add(new JLabel("Reference No.:"));
@@ -64,13 +82,16 @@ public class CheckoutDialog extends JDialog {
 
         add(center, BorderLayout.CENTER);
 
+        // Create bottom panel with buttons
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         JButton btnCancel = new JButton("Cancel");
         JButton btnConfirm = new JButton("Confirm");
+        
         btnCancel.addActionListener(e -> {
             confirmed = false;
             dispose();
         });
+        
         btnConfirm.addActionListener(e -> {
             confirmed = true;
             showReceipt();
@@ -81,11 +102,13 @@ public class CheckoutDialog extends JDialog {
         add(bottom, BorderLayout.SOUTH);
     }
 
+    /**
+     * Updates all the total labels with calculated values.
+     */
     private void updateTotals() {
-        double vatRate = 0.12;
         double vatable = subtotal / (1 + vatRate);
         double vat = subtotal - vatable;
-        double nonVat = 0.0;
+        double nonVat = 0.0;  // Currently no VAT-exempt items
         double total = subtotal;
 
         lblRef.setText(referenceNo);
@@ -96,59 +119,73 @@ public class CheckoutDialog extends JDialog {
         lblTotal.setText(String.format("₱%.2f", total));
     }
 
+    /**
+     * Checks if the user confirmed the checkout.
+     * 
+     * @return true if confirmed, false if cancelled
+     */
     public boolean isConfirmed() {
         return confirmed;
     }
 
+    /**
+     * Shows a receipt dialog with the sale details.
+     * This appears after the user confirms the checkout.
+     */
     private void showReceipt() {
-        // Simulate printed receipt in a pop-up window
+        // Create a dialog to show the receipt
         JDialog receipt = new JDialog(this, "Receipt", true);
         receipt.setSize(420, 520);
         receipt.setLocationRelativeTo(this);
         receipt.setLayout(new BorderLayout(10, 10));
 
+        // Create text area for receipt display
         JTextArea txtReceipt = new JTextArea();
         txtReceipt.setEditable(false);
         txtReceipt.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("        LTB Paint Center\n");
-        sb.append("      Official Sales Receipt\n");
-        sb.append("--------------------------------------\n");
-        sb.append("Date: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
-        sb.append("Ref No.: ").append(referenceNo).append("\n");
-        sb.append("--------------------------------------\n");
-        sb.append(String.format("%-20s %5s %10s\n", "Item", "Qty", "Subtotal"));
-        sb.append("--------------------------------------\n");
+        // Build receipt text
+        StringBuilder receiptText = new StringBuilder();
+        receiptText.append("        LTB Paint Center\n");
+        receiptText.append("      Official Sales Receipt\n");
+        receiptText.append("--------------------------------------\n");
+        receiptText.append("Date: ").append(
+                new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).append("\n");
+        receiptText.append("Ref No.: ").append(referenceNo).append("\n");
+        receiptText.append("--------------------------------------\n");
+        receiptText.append(String.format("%-20s %5s %10s\n", "Item", "Qty", "Subtotal"));
+        receiptText.append("--------------------------------------\n");
 
+        // Add each item to receipt
         for (SaleItem item : cartItems) {
-            sb.append(String.format("%-20s %5d %10.2f\n",
-                    item.getName().length() > 20 ? item.getName().substring(0, 20) : item.getName(),
-                    item.getQty(),
-                    item.getSubtotal()));
+            String itemName = item.getName().length() > 20 ? 
+                    item.getName().substring(0, 20) : item.getName();
+            receiptText.append(String.format("%-20s %5d %10.2f\n",
+                    itemName, item.getQty(), item.getSubtotal()));
         }
 
-        sb.append("--------------------------------------\n");
+        receiptText.append("--------------------------------------\n");
 
-        double vatRate = 0.12;
+        // Calculate totals
         double subtotalWithVat = subtotal;
         double vatable = subtotalWithVat / (1 + vatRate);
         double vat = subtotalWithVat - vatable;
         double nonVat = 0.0;
         double total = subtotalWithVat;
 
-        sb.append(String.format("VATable: %26.2f\n", vatable));
-        sb.append(String.format("VAT-Exempt: %23.2f\n", nonVat));
-        sb.append(String.format("Subtotal: %26.2f\n", subtotalWithVat));
-        sb.append(String.format("VAT (12%%): %25.2f\n", vat));
-        sb.append(String.format("TOTAL: %28.2f\n", total));
-        sb.append("--------------------------------------\n");
-        sb.append("Thank you for shopping with us!\n");
-        sb.append("       - LTB Paint Center -\n");
+        receiptText.append(String.format("VATable: %26.2f\n", vatable));
+        receiptText.append(String.format("VAT-Exempt: %23.2f\n", nonVat));
+        receiptText.append(String.format("Subtotal: %26.2f\n", subtotalWithVat));
+        receiptText.append(String.format("VAT (12%%): %25.2f\n", vat));
+        receiptText.append(String.format("TOTAL: %28.2f\n", total));
+        receiptText.append("--------------------------------------\n");
+        receiptText.append("Thank you for shopping with us!\n");
+        receiptText.append("       - LTB Paint Center -\n");
 
-        txtReceipt.setText(sb.toString());
+        txtReceipt.setText(receiptText.toString());
         receipt.add(new JScrollPane(txtReceipt), BorderLayout.CENTER);
 
+        // Add close button
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnClose = new JButton("Close");
         btnClose.addActionListener(e -> {

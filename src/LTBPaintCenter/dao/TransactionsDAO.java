@@ -1,17 +1,14 @@
-package LTBPaintCenter.model;
+package LTBPaintCenter.dao;
 
+import LTBPaintCenter.model.Database;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
  * This class provides utility functions for managing sales transactions.
- * NOTE: This is a duplicate of LTBPaintCenter.dao.TransactionsDAO.
- * This file should be removed and the dao.TransactionsDAO should be used instead.
- * 
- * @deprecated Use LTBPaintCenter.dao.TransactionsDAO instead
+ * Used for administrative maintenance tasks like clearing all sales data.
  */
-@Deprecated
 public class TransactionsDAO {
 
     /**
@@ -26,7 +23,7 @@ public class TransactionsDAO {
              Statement st = conn.createStatement()) {
             
             try {
-                // Disable autocommit to use a transaction
+                // Disable autocommit so we can use a transaction
                 conn.setAutoCommit(false);
 
                 // Delete all rows from the sales table

@@ -16,8 +16,9 @@ public class InventoryPanel extends JPanel {
     private final DefaultTableModel tableModel;
     private final JTable table;
 
-    // user-typed product code
+    // Product ID field - only visible/editable when updating existing products
     private final JTextField txtCode = new JTextField();
+    private final JLabel lblProductId = new JLabel("Product ID:");
     private final JTextField txtName = new JTextField();
     private final JComboBox<String> cbBrand = new JComboBox<>();
     private final JComboBox<String> cbColor = new JComboBox<>();
@@ -25,7 +26,7 @@ public class InventoryPanel extends JPanel {
     private final JTextField txtPrice = new JTextField();
     private final JTextField txtQty = new JTextField();
     private final JSpinner spDateImported = new JSpinner(new SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.DAY_OF_MONTH));
-    private final JSpinner spExpiration = new JSpinner(new SpinnerDateModel());
+    private final JSpinner spExpiration = new JSpinner(new SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.DAY_OF_MONTH));
     private final JCheckBox chkNoExpiration = new JCheckBox("No Expiration");
 
     // Filters & sorting
@@ -45,9 +46,7 @@ public class InventoryPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
 
-        // ─────────────────────────────
         // Table setup
-        // ─────────────────────────────
         String[] columns = {
                 "ID", "Product ID", "Name", "Brand", "Color", "Type", "Price", "Qty",
                 "Date Imported", "Expiration Date", "Status"
@@ -63,7 +62,7 @@ public class InventoryPanel extends JPanel {
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Hide numeric ID column from view while keeping it in the model for operations
+        // Keep numeric ID in model but hide the view column
         table.removeColumn(table.getColumnModel().getColumn(0));
 
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -72,24 +71,33 @@ public class InventoryPanel extends JPanel {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) return;
             int viewRow = table.getSelectedRow();
-            if (viewRow < 0) return;
+            if (viewRow < 0) {
+                // No row selected, clear form and disable Product ID field (adding mode)
+                clearForm();
+                return;
+            }
             int row = table.convertRowIndexToModel(viewRow);
             try {
+                // Enable Product ID field when updating (row selected)
+                txtCode.setEditable(true);
+                txtCode.setEnabled(true);
+                txtCode.setBackground(Color.WHITE);
                 txtCode.setText(String.valueOf(tableModel.getValueAt(row, 1)));
+                
                 txtName.setText(String.valueOf(tableModel.getValueAt(row, 2)));
                 String brand = String.valueOf(tableModel.getValueAt(row, 3));
                 String color = String.valueOf(tableModel.getValueAt(row, 4));
                 String type = String.valueOf(tableModel.getValueAt(row, 5));
-                cbBrand.setSelectedItem(brand);
-                cbColor.setSelectedItem(color);
-                cbType.setSelectedItem(type);
+                if (brand != null) cbBrand.setSelectedItem(brand);
+                if (color != null) cbColor.setSelectedItem(color);
+                if (type != null) cbType.setSelectedItem(type);
                 txtPrice.setText(String.valueOf(tableModel.getValueAt(row, 6)));
                 txtQty.setText(String.valueOf(tableModel.getValueAt(row, 7)));
 
-                java.time.format.DateTimeFormatter df = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
                 String impStr = String.valueOf(tableModel.getValueAt(row, 8));
                 if (impStr != null && !impStr.isBlank()) {
-                    java.time.LocalDate ld = java.time.LocalDate.parse(impStr, df);
+                    LocalDate ld = LocalDate.parse(impStr, df);
                     java.util.Date d = java.util.Date.from(ld.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
                     spDateImported.setValue(d);
                 }
@@ -98,19 +106,19 @@ public class InventoryPanel extends JPanel {
                 if (expStr != null && !expStr.isBlank()) {
                     chkNoExpiration.setSelected(false);
                     spExpiration.setEnabled(true);
-                    java.time.LocalDate ld = java.time.LocalDate.parse(expStr, df);
+                    LocalDate ld = LocalDate.parse(expStr, df);
                     java.util.Date d = java.util.Date.from(ld.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
                     spExpiration.setValue(d);
                 } else {
                     chkNoExpiration.setSelected(true);
                     spExpiration.setEnabled(false);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         });
 
-        // ─────────────────────────────
         // Form panel
-        // ─────────────────────────────
         JPanel formPanel = new JPanel(new GridLayout(3, 6, 8, 8));
         formPanel.setBorder(BorderFactory.createTitledBorder("Product Batch Details"));
         formPanel.setBackground(Color.WHITE);
@@ -118,17 +126,27 @@ public class InventoryPanel extends JPanel {
         cbBrand.setEditable(true);
         cbColor.setEditable(true);
         cbType.setEditable(true);
+
+        // Make spinner text fields non-editable (user picks from spinner UI)
         ((JSpinner.DefaultEditor) spDateImported.getEditor()).getTextField().setEditable(false);
+        ((JSpinner.DefaultEditor) spExpiration.getEditor()).getTextField().setEditable(false);
+
         spDateImported.setEditor(new JSpinner.DateEditor(spDateImported, "yyyy-MM-dd"));
         spExpiration.setEditor(new JSpinner.DateEditor(spExpiration, "yyyy-MM-dd"));
 
-        // Row 1: Product ID, Name, Brand
-        formPanel.add(new JLabel("Product ID:"));
+        // Row 1: Product ID (disabled when adding, enabled when updating), Name, Brand
+        formPanel.add(lblProductId);
         formPanel.add(txtCode);
         formPanel.add(new JLabel("Name:"));
         formPanel.add(txtName);
         formPanel.add(new JLabel("Brand:"));
         formPanel.add(cbBrand);
+        
+        // Initially disable Product ID field (only enabled when updating)
+        txtCode.setEditable(false);
+        txtCode.setEnabled(false);
+        txtCode.setBackground(new Color(240, 240, 240)); // Visual indicator it's disabled
+        txtCode.setText("(Auto-generated when adding)");
 
         // Row 2: Color, Type, Price
         formPanel.add(new JLabel("Color:"));
@@ -151,8 +169,8 @@ public class InventoryPanel extends JPanel {
         formPanel.add(expPanel);
 
         chkNoExpiration.addActionListener(e -> spExpiration.setEnabled(!chkNoExpiration.isSelected()));
+        spExpiration.setEnabled(!chkNoExpiration.isSelected());
 
-        // Top container: form + filter/sort bar
         JPanel northContainer = new JPanel(new BorderLayout(8, 8));
         northContainer.setBackground(Color.WHITE);
         northContainer.add(formPanel, BorderLayout.NORTH);
@@ -179,9 +197,7 @@ public class InventoryPanel extends JPanel {
         northContainer.add(filterBar, BorderLayout.SOUTH);
         add(northContainer, BorderLayout.NORTH);
 
-        // ─────────────────────────────
         // Buttons
-        // ─────────────────────────────
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 5));
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnUpdate);
@@ -189,9 +205,7 @@ public class InventoryPanel extends JPanel {
         buttonPanel.add(btnRefresh);
         add(buttonPanel, BorderLayout.SOUTH);
 
-        // ─────────────────────────────
         // Button actions
-        // ─────────────────────────────
         btnAdd.addActionListener(e -> handleAdd());
         btnUpdate.addActionListener(e -> handleUpdate());
         btnDelete.addActionListener(e -> handleDelete());
@@ -202,44 +216,107 @@ public class InventoryPanel extends JPanel {
         refreshTable();
     }
 
-    // ─────────────────────────────
     // Event handlers
-    // ─────────────────────────────
     private void handleAdd() {
-        try {
-            String name = txtName.getText().trim();
-            String brand = (cbBrand.getEditor().getItem() != null) ? cbBrand.getEditor().getItem().toString().trim() : "";
-            String color = (cbColor.getEditor().getItem() != null) ? cbColor.getEditor().getItem().toString().trim() : "";
-            String type = (cbType.getEditor().getItem() != null) ? cbType.getEditor().getItem().toString().trim() : "";
-            double price = Double.parseDouble(txtPrice.getText().trim());
-            int qty = Integer.parseInt(txtQty.getText().trim());
-            java.util.Date impDate = (java.util.Date) spDateImported.getValue();
-            LocalDate imported = impDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            LocalDate expiration = null;
-            if (!chkNoExpiration.isSelected()) {
-                java.util.Date expDate = (java.util.Date) spExpiration.getValue();
-                expiration = expDate == null ? null : expDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            }
+        // Product ID is auto-generated at save time, no need to read from field
 
-            String code = txtCode.getText().trim();
-            boolean added = controller.addBatch(code, name, brand, color, type, price, qty, imported, expiration);
-            if (added) {
-                if (brand != null && !brand.isBlank()) cbBrand.addItem(brand);
-                if (color != null && !color.isBlank()) cbColor.addItem(color);
-                if (type != null && !type.isBlank()) cbType.addItem(type);
-                JOptionPane.showMessageDialog(this, "Batch added successfully!");
-                refreshTable();
-                // Notify other modules
-                if (Global.posController != null) Global.posController.refreshPOS();
-                if (Global.monitoringController != null) Global.monitoringController.refresh();
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to add batch.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Invalid input: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+        String name = txtName.getText().trim();
+        if (name.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Product name is required.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocusInWindow();
+            return;
         }
+
+        String brand = (cbBrand.getEditor().getItem() != null) ? cbBrand.getEditor().getItem().toString().trim() : "";
+        if (brand.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Brand is required.", "Validation", JOptionPane.WARNING_MESSAGE);
+            cbBrand.requestFocusInWindow();
+            return;
+        }
+
+        String color = (cbColor.getEditor().getItem() != null) ? cbColor.getEditor().getItem().toString().trim() : "";
+        String type = (cbType.getEditor().getItem() != null) ? cbType.getEditor().getItem().toString().trim() : "";
+
+        double price;
+        try {
+            price = Double.parseDouble(txtPrice.getText().trim());
+            if (price < 0) throw new NumberFormatException("negative");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Enter a valid non-negative price.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtPrice.requestFocusInWindow();
+            return;
+        }
+
+        int qty;
+        try {
+            qty = Integer.parseInt(txtQty.getText().trim());
+            if (qty <= 0) {
+                JOptionPane.showMessageDialog(this, "Quantity must be at least 1 when adding a batch.", "Validation", JOptionPane.WARNING_MESSAGE);
+                txtQty.requestFocusInWindow();
+                return;
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Enter a valid integer quantity.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtQty.requestFocusInWindow();
+            return;
+        }
+
+        java.util.Date impDate = (java.util.Date) spDateImported.getValue();
+        LocalDate imported = impDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+
+        LocalDate expiration = null;
+        if (!chkNoExpiration.isSelected()) {
+            java.util.Date expDate = (java.util.Date) spExpiration.getValue();
+            if (expDate == null) {
+                JOptionPane.showMessageDialog(this, "Select an expiration date or check 'No Expiration'.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            expiration = expDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            if (!expiration.isAfter(imported)) {
+                JOptionPane.showMessageDialog(this, "Expiration date must be after Date Imported.", "Validation", JOptionPane.WARNING_MESSAGE);
+                spExpiration.requestFocusInWindow();
+                return;
+            }
+        }
+
+        // Delegate to controller - always pass null to force auto-generation for new products
+        // This ensures unique IDs even if multiple products are added quickly
+        boolean added = controller.addBatch(null, name, brand, color, type, price, qty, imported, expiration);
+        if (added) {
+            addItemToComboIfMissing(cbBrand, brand);
+            addItemToComboIfMissing(cbColor, color);
+            addItemToComboIfMissing(cbType, type);
+
+            JOptionPane.showMessageDialog(this, "Batch added successfully!");
+            // Clear form and update product ID preview for next entry
+            clearForm();
+            refreshTable();
+            if (Global.posController != null) Global.posController.refreshPOS();
+            if (Global.monitoringController != null) Global.monitoringController.refresh();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to add batch.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    // Clear form fields
+    private void clearForm() {
+        // Disable Product ID field when adding new products (it will be auto-generated)
+        txtCode.setEditable(false);
+        txtCode.setEnabled(false);
+        txtCode.setBackground(new Color(240, 240, 240));
+        txtCode.setText("(Auto-generated when adding)");
+        
+        txtName.setText("");
+        txtPrice.setText("");
+        txtQty.setText("");
+        cbBrand.setSelectedItem(null);
+        cbColor.setSelectedItem(null);
+        cbType.setSelectedItem(null);
+        spDateImported.setValue(new java.util.Date());
+        spExpiration.setValue(new java.util.Date());
+        chkNoExpiration.setSelected(false);
+        spExpiration.setEnabled(true);
+        // Product ID will be auto-generated when adding
     }
 
     private void handleUpdate() {
@@ -250,42 +327,112 @@ public class InventoryPanel extends JPanel {
         }
         int row = table.convertRowIndexToModel(viewRow);
 
+        int id;
         try {
-            int id = Integer.parseInt(tableModel.getValueAt(row, 0).toString());
-
-            String name = txtName.getText().trim();
-            String brand = (cbBrand.getEditor().getItem() != null) ? cbBrand.getEditor().getItem().toString().trim() : "";
-            String color = (cbColor.getEditor().getItem() != null) ? cbColor.getEditor().getItem().toString().trim() : "";
-            String type = (cbType.getEditor().getItem() != null) ? cbType.getEditor().getItem().toString().trim() : "";
-
-            double price = Double.parseDouble(txtPrice.getText().trim());
-            int qty = Integer.parseInt(txtQty.getText().trim());
-
-            java.util.Date impDate = (java.util.Date) spDateImported.getValue();
-            LocalDate imported = impDate == null ? null : impDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-
-            LocalDate expiration = null;
-            if (!chkNoExpiration.isSelected()) {
-                java.util.Date expDate = (java.util.Date) spExpiration.getValue();
-                expiration = expDate == null ? null : expDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            }
-
-            // status will be recomputed in controller.updateBatch
-            String productCode = txtCode.getText().trim();
-            InventoryBatch batch = new InventoryBatch(id, productCode, name, brand, color, type, price, qty, imported, expiration, "");
-            boolean updated = controller.updateBatch(batch);
-            if (updated) {
-                JOptionPane.showMessageDialog(this, "Batch updated!");
-                refreshTable();
-                if (Global.posController != null) Global.posController.refreshPOS();
-                if (Global.monitoringController != null) Global.monitoringController.refresh();
-            } else {
-                JOptionPane.showMessageDialog(this, "Update failed.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-
+            id = Integer.parseInt(String.valueOf(tableModel.getValueAt(row, 0)));
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Update failed: " + ex.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid selection (missing ID).", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String name = txtName.getText().trim();
+        if (name.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Product name is required.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtName.requestFocusInWindow();
+            return;
+        }
+
+        String brand = (cbBrand.getEditor().getItem() != null) ? cbBrand.getEditor().getItem().toString().trim() : "";
+        if (brand.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Brand is required.", "Validation", JOptionPane.WARNING_MESSAGE);
+            cbBrand.requestFocusInWindow();
+            return;
+        }
+
+        String color = (cbColor.getEditor().getItem() != null) ? cbColor.getEditor().getItem().toString().trim() : "";
+        String type = (cbType.getEditor().getItem() != null) ? cbType.getEditor().getItem().toString().trim() : "";
+
+        double price;
+        try {
+            price = Double.parseDouble(txtPrice.getText().trim());
+            if (price < 0) throw new NumberFormatException("negative");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Enter a valid non-negative price.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtPrice.requestFocusInWindow();
+            return;
+        }
+
+        int qty;
+        try {
+            qty = Integer.parseInt(txtQty.getText().trim());
+            if (qty < 0) {
+                JOptionPane.showMessageDialog(this, "Quantity cannot be negative.", "Validation", JOptionPane.WARNING_MESSAGE);
+                txtQty.requestFocusInWindow();
+                return;
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Enter a valid integer quantity.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtQty.requestFocusInWindow();
+            return;
+        }
+
+        java.util.Date impDate = (java.util.Date) spDateImported.getValue();
+        LocalDate imported = impDate == null ? null : impDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+
+        LocalDate expiration = null;
+        if (!chkNoExpiration.isSelected()) {
+            java.util.Date expDate = (java.util.Date) spExpiration.getValue();
+            if (expDate == null) {
+                JOptionPane.showMessageDialog(this, "Select an expiration date or check 'No Expiration'.", "Validation", JOptionPane.WARNING_MESSAGE);
+                spExpiration.requestFocusInWindow();
+                return;
+            }
+            expiration = expDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            if (imported != null && !expiration.isAfter(imported)) {
+                JOptionPane.showMessageDialog(this, "Expiration date must be after Date Imported.", "Validation", JOptionPane.WARNING_MESSAGE);
+                spExpiration.requestFocusInWindow();
+                return;
+            }
+        }
+
+        // Get product code from the form field (visible when updating)
+        String productCode = txtCode.getText().trim();
+        if (productCode.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Product ID is required when updating.", "Validation", JOptionPane.WARNING_MESSAGE);
+            txtCode.requestFocusInWindow();
+            return;
+        }
+        
+        // Validate that the product code doesn't already exist (unless it's the same product)
+        String existingCode = String.valueOf(tableModel.getValueAt(row, 1));
+        if (!productCode.equals(existingCode)) {
+            // Check if the new product code already exists in the database
+            List<InventoryBatch> allBatches = controller.getAllBatches();
+            for (InventoryBatch b : allBatches) {
+                if (b.getId() != id && productCode.equals(b.getProductCode())) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Product ID '" + productCode + "' already exists. Please use a unique Product ID.", 
+                        "Duplicate Product ID", 
+                        JOptionPane.WARNING_MESSAGE);
+                    txtCode.requestFocusInWindow();
+                    return;
+                }
+            }
+        }
+        
+        InventoryBatch batch = new InventoryBatch(id, productCode, name, brand, color, type, price, qty, imported, expiration, "");
+        boolean updated = controller.updateBatch(batch);
+        if (updated) {
+            addItemToComboIfMissing(cbBrand, brand);
+            addItemToComboIfMissing(cbColor, color);
+            addItemToComboIfMissing(cbType, type);
+
+            JOptionPane.showMessageDialog(this, "Batch updated!");
+            refreshTable();
+            if (Global.posController != null) Global.posController.refreshPOS();
+            if (Global.monitoringController != null) Global.monitoringController.refresh();
+        } else {
+            JOptionPane.showMessageDialog(this, "Update failed.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -297,20 +444,29 @@ public class InventoryPanel extends JPanel {
         }
         int row = table.convertRowIndexToModel(viewRow);
 
-        int id = Integer.parseInt(tableModel.getValueAt(row, 0).toString());
+        int id;
+        try {
+            id = Integer.parseInt(String.valueOf(tableModel.getValueAt(row, 0)));
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Invalid selection (missing ID).", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         int confirm = JOptionPane.showConfirmDialog(this, "Are you sure?", "Confirm Delete",
                 JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
-            controller.deleteBatch(id);
-            refreshTable();
-            if (Global.posController != null) Global.posController.refreshPOS();
-            if (Global.monitoringController != null) Global.monitoringController.refresh();
+            boolean ok = controller.deleteBatch(id);
+            if (ok) {
+                refreshTable();
+                if (Global.posController != null) Global.posController.refreshPOS();
+                if (Global.monitoringController != null) Global.monitoringController.refresh();
+            } else {
+                JOptionPane.showMessageDialog(this, "Delete failed.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    // ─────────────────────────────
     // Refresh table
-    // ─────────────────────────────
     public void refreshTable() {
         tableModel.setRowCount(0);
         List<InventoryBatch> batches = controller.getAllBatches();
@@ -322,9 +478,9 @@ public class InventoryPanel extends JPanel {
         java.util.Set<String> types = new java.util.TreeSet<>();
 
         for (InventoryBatch b : batches) {
-            brands.add(b.getBrand() == null ? "" : b.getBrand());
-            colors.add(b.getColor() == null ? "" : b.getColor());
-            types.add(b.getType() == null ? "" : b.getType());
+            if (b.getBrand() != null && !b.getBrand().isBlank()) brands.add(b.getBrand());
+            if (b.getColor() != null && !b.getColor().isBlank()) colors.add(b.getColor());
+            if (b.getType() != null && !b.getType().isBlank()) types.add(b.getType());
 
             String status = computeDisplayStatus(b);
             tableModel.addRow(new Object[]{
@@ -339,18 +495,21 @@ public class InventoryPanel extends JPanel {
         // Update filter combos
         cbFilterBrand.removeAllItems();
         cbFilterBrand.addItem("All Brands");
-        for (String s : brands) if (s != null && !s.isBlank()) cbFilterBrand.addItem(s);
+        for (String s : brands) cbFilterBrand.addItem(s);
 
         cbFilterColor.removeAllItems();
         cbFilterColor.addItem("All Colors");
-        for (String s : colors) if (s != null && !s.isBlank()) cbFilterColor.addItem(s);
+        for (String s : colors) cbFilterColor.addItem(s);
 
-        // Update form combos (keep existing items but ensure base set)
-        cbBrand.removeAllItems(); for (String s : brands) if (s != null && !s.isBlank()) cbBrand.addItem(s);
-        cbColor.removeAllItems(); for (String s : colors) if (s != null && !s.isBlank()) cbColor.addItem(s);
-        cbType.removeAllItems(); for (String s : types) if (s != null && !s.isBlank()) cbType.addItem(s);
+        cbBrand.removeAllItems();
+        for (String s : brands) cbBrand.addItem(s);
 
-        // Re-apply filters if sorter exists
+        cbColor.removeAllItems();
+        for (String s : colors) cbColor.addItem(s);
+
+        cbType.removeAllItems();
+        for (String s : types) cbType.addItem(s);
+
         if (rowSorter != null) applyFilters();
     }
 
@@ -390,7 +549,7 @@ public class InventoryPanel extends JPanel {
         rowSorter = new javax.swing.table.TableRowSorter<>(tableModel);
         table.setRowSorter(rowSorter);
 
-        // Numeric comparator for price (column 6 after adding Code column)
+        // Numeric comparator for price (model column 6)
         rowSorter.setComparator(6, (o1, o2) -> {
             try {
                 double d1 = Double.parseDouble(o1.toString());
@@ -412,7 +571,6 @@ public class InventoryPanel extends JPanel {
         cbSort.addActionListener(e -> applySort());
 
         // Row renderer to highlight status when not selected; preserve selection highlight when selected
-        javax.swing.table.TableCellRenderer defaultRenderer = table.getDefaultRenderer(Object.class);
         table.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
             @Override
             public java.awt.Component getTableCellRendererComponent(JTable tbl, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -428,10 +586,11 @@ public class InventoryPanel extends JPanel {
                 String status = String.valueOf(tableModel.getValueAt(modelRow, 10));
                 if (status != null && !status.isBlank()) {
                     Color bg = new Color(255, 235, 205); // default: light peach
-                    if (status.toLowerCase().contains("expired")) bg = new Color(255, 205, 210); // light red
-                    else if (status.toLowerCase().contains("expiring")) bg = new Color(255, 224, 178); // light orange
-                    else if (status.toLowerCase().contains("low stock")) bg = new Color(255, 249, 196); // light yellow
-                    else if (status.toLowerCase().contains("out of stock")) bg = new Color(224, 224, 224); // light gray
+                    String s = status.toLowerCase();
+                    if (s.contains("expired")) bg = new Color(255, 205, 210); // light red
+                    else if (s.contains("expiring")) bg = new Color(255, 224, 178); // light orange
+                    else if (s.contains("low stock")) bg = new Color(255, 249, 196); // light yellow
+                    else if (s.contains("out of stock")) bg = new Color(224, 224, 224); // light gray
                     c.setBackground(bg);
                 }
                 return c;
@@ -479,7 +638,7 @@ public class InventoryPanel extends JPanel {
         };
         rowSorter.setRowFilter(rf);
     }
-    
+
     // Navigate/select a row by its internal numeric ID; optionally focus fields for editing
     public void selectRowById(int id, boolean focusEditor) {
         if (id <= 0) return;
@@ -511,5 +670,16 @@ public class InventoryPanel extends JPanel {
                 txtName.requestFocusInWindow();
             }
         });
+    }
+
+    // Helper: add item to combo only if missing (case-insensitive)
+    private void addItemToComboIfMissing(JComboBox<String> combo, String value) {
+        if (value == null) return;
+        value = value.trim();
+        if (value.isEmpty()) return;
+        for (int i = 0; i < combo.getItemCount(); i++) {
+            if (value.equalsIgnoreCase(combo.getItemAt(i))) return;
+        }
+        combo.addItem(value);
     }
 }

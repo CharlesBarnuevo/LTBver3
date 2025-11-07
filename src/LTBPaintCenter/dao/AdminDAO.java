@@ -1,5 +1,6 @@
-package LTBPaintCenter.model;
+package LTBPaintCenter.dao;
 
+import LTBPaintCenter.model.Database;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.sql.Connection;
@@ -8,18 +9,16 @@ import java.sql.ResultSet;
 
 /**
  * This class handles admin password management.
- * NOTE: This is a duplicate of LTBPaintCenter.dao.AdminDAO.
- * This file should be removed and the dao.AdminDAO should be used instead.
- * 
- * @deprecated Use LTBPaintCenter.dao.AdminDAO instead
+ * It stores passwords securely using hashing and salt.
+ * Passwords are never stored in plain text - only their hashes are stored.
  */
-@Deprecated
 public class AdminDAO {
 
     /**
      * Verifies if a password is correct.
+     * Compares the provided password with the stored hash.
      * 
-     * @param plainPassword The password to verify
+     * @param plainPassword The password to verify (in plain text)
      * @return true if password is correct, false otherwise
      */
     public static boolean verifyPassword(String plainPassword) {
@@ -33,6 +32,7 @@ public class AdminDAO {
             String salt = hashAndSalt[1];
             String actualHash = hashPassword(plainPassword, salt);
             
+            // Use constant-time comparison to prevent timing attacks
             return constantTimeEquals(expectedHash, actualHash);
         } catch (Exception e) {
             System.err.println("[AdminDAO] verifyPassword failed: " + e.getMessage());
@@ -42,13 +42,15 @@ public class AdminDAO {
 
     /**
      * Changes the admin password.
+     * Requires the current password to be verified first.
      * 
      * @param currentPassword The current password
-     * @param newPassword The new password
-     * @return true if password was changed successfully
+     * @param newPassword The new password to set
+     * @return true if password was changed successfully, false otherwise
      */
     public static boolean changePassword(String currentPassword, String newPassword) {
         try (Connection conn = Database.getConnection()) {
+            // First verify the current password
             String[] hashAndSalt = getHashAndSalt(conn);
             if (hashAndSalt == null) {
                 return false;
@@ -59,9 +61,10 @@ public class AdminDAO {
             String actualHash = hashPassword(currentPassword, salt);
             
             if (!constantTimeEquals(expectedHash, actualHash)) {
-                return false;
+                return false;  // Current password is wrong
             }
             
+            // Generate new salt and hash for the new password
             String newSalt = generateSalt();
             String newHash = hashPassword(newPassword, newSalt);
             setHashAndSalt(conn, newHash, newSalt);
@@ -75,6 +78,9 @@ public class AdminDAO {
 
     /**
      * Gets the password hash and salt from the database.
+     * 
+     * @param conn The database connection
+     * @return An array with [hash, salt], or null if not found
      */
     static String[] getHashAndSalt(Connection conn) {
         try (PreparedStatement ps = conn.prepareStatement(
@@ -92,6 +98,10 @@ public class AdminDAO {
 
     /**
      * Updates the password hash and salt in the database.
+     * 
+     * @param conn The database connection
+     * @param hash The password hash
+     * @param salt The salt used for hashing
      */
     static void setHashAndSalt(Connection conn, String hash, String salt) {
         try (PreparedStatement update = conn.prepareStatement(
@@ -100,6 +110,7 @@ public class AdminDAO {
             update.setString(2, salt);
             int rowsAffected = update.executeUpdate();
             
+            // If no row was updated, insert a new one
             if (rowsAffected == 0) {
                 try (PreparedStatement insert = conn.prepareStatement(
                         "INSERT OR REPLACE INTO admin_settings (id, password_hash, salt) VALUES (1, ?, ?)")) {
@@ -115,6 +126,9 @@ public class AdminDAO {
 
     /**
      * Generates a random salt for password hashing.
+     * Salt makes passwords more secure by adding randomness.
+     * 
+     * @return A hexadecimal string representing the salt
      */
     public static String generateSalt() {
         byte[] salt = new byte[16];
@@ -124,6 +138,11 @@ public class AdminDAO {
 
     /**
      * Hashes a password with a salt using SHA-256.
+     * This is a one-way function - you can't get the password back from the hash.
+     * 
+     * @param plainPassword The password in plain text
+     * @param hexSalt The salt in hexadecimal format
+     * @return The hashed password as a hexadecimal string
      */
     public static String hashPassword(String plainPassword, String hexSalt) {
         try {
@@ -132,10 +151,12 @@ public class AdminDAO {
                     plainPassword.getBytes(java.nio.charset.StandardCharsets.UTF_8) : 
                     new byte[0];
             
+            // Combine salt and password
             byte[] data = new byte[salt.length + passwordBytes.length];
             System.arraycopy(salt, 0, data, 0, salt.length);
             System.arraycopy(passwordBytes, 0, data, salt.length, passwordBytes.length);
             
+            // Hash using SHA-256
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(data);
             
@@ -146,7 +167,13 @@ public class AdminDAO {
     }
 
     /**
-     * Compares two strings in constant time to prevent timing attacks.
+     * Compares two strings in constant time.
+     * This prevents timing attacks where an attacker could guess
+     * the password by measuring how long the comparison takes.
+     * 
+     * @param a First string
+     * @param b Second string
+     * @return true if strings are equal, false otherwise
      */
     private static boolean constantTimeEquals(String a, String b) {
         if (a == null || b == null) {
@@ -165,6 +192,9 @@ public class AdminDAO {
 
     /**
      * Converts a byte array to a hexadecimal string.
+     * 
+     * @param bytes The byte array to convert
+     * @return A hexadecimal string
      */
     private static String toHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder(bytes.length * 2);
@@ -176,6 +206,9 @@ public class AdminDAO {
 
     /**
      * Converts a hexadecimal string to a byte array.
+     * 
+     * @param hexString The hexadecimal string to convert
+     * @return A byte array
      */
     private static byte[] fromHex(String hexString) {
         if (hexString == null) {
